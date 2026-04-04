@@ -76,10 +76,10 @@
         nav { background: var(--primary); color: white; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 65px; border-bottom: 3px solid var(--border); }
         .nav-brand { font-family: var(--font-heading); font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 10px; }
         .nav-links { display: flex; list-style: none; margin: 0; padding: 0; height: 100%; }
-        .nav-links li { display: flex; align-items: center; padding: 0 15px; cursor: pointer; font-weight: 700; font-size: 0.8em; height: 100%; border-bottom: 4px solid transparent; text-transform: uppercase; }
+        .nav-links li { display: flex; align-items: center; padding: 0 15px; cursor: pointer; font-weight: 700; font-size: 0.75em; height: 100%; border-bottom: 4px solid transparent; text-transform: uppercase; }
         .nav-links li.active { border-bottom-color: var(--accent); color: var(--accent); }
 
-        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); box-shadow: 0 -4px 20px rgba(0,0,0,0.08); grid-template-columns: repeat(5, 1fr); z-index: 1001; height: 75px; padding-bottom: env(safe-area-inset-bottom); border-top: 2px solid var(--border); }
+        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); box-shadow: 0 -4px 20px rgba(0,0,0,0.08); grid-template-columns: repeat(6, 1fr); z-index: 1001; height: 75px; padding-bottom: env(safe-area-inset-bottom); border-top: 2px solid var(--border); }
         .mobile-nav div { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.6em; font-weight: 700; color: var(--secondary); cursor: pointer; text-transform: uppercase; font-family: var(--font-heading); }
         .mobile-nav div.active { color: var(--accent); }
         .mobile-nav i { font-size: 1.2em; margin-bottom: 5px; }
@@ -96,13 +96,17 @@
         .stat-header { font-size: 0.6em; font-weight: 700; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; display: block; font-family: var(--font-heading); }
         .stat-value { font-size: 1.8em; font-weight: 900; color: var(--text); margin: 0; display: flex; align-items: center; gap: 10px; text-shadow: var(--glow); }
         .stat-value.success { color: var(--success); }
+        
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
         
         form { display: flex; flex-direction: column; gap: 16px; }
-        input, select, button { padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; width: 100%; font-family: var(--font-main); background: var(--white); color: var(--text); font-weight: 700; }
+        input, select, button, textarea { padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; width: 100%; font-family: var(--font-main); background: var(--white); color: var(--text); font-weight: 700; }
+        textarea { resize: vertical; min-height: 80px; }
         button { background: var(--accent); color: var(--primary); border: none; cursor: pointer; text-transform: uppercase; font-family: var(--font-heading); font-size: 0.6em; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
         button.secondary { background: var(--bg); color: var(--primary); border: 2px solid var(--border); }
-        button.danger { background: var(--danger); color: white; }
+        button.danger { background: var(--danger); color: white; border-color: var(--danger); }
+        button.edit { background: var(--warning); color: var(--bg); border-color: var(--warning); }
         .delete-btn { width: auto; padding: 8px 14px; font-size: 0.5em; background: transparent; color: var(--danger); border: 2px solid var(--danger); min-width: 40px; }
 
         .badge { padding: 4px 8px; border-radius: 20px; font-size: 0.5em; font-weight: 800; text-transform: uppercase; font-family: var(--font-heading); border: 1px solid currentColor; }
@@ -146,6 +150,7 @@
         <ul class="nav-links">
             <li onclick="showPage('dashboard')" class="nav-item" data-page="dashboard">Dash</li>
             <li onclick="showPage('side-hustle')" class="nav-item" data-page="side-hustle" id="nav-label-hustle">Quest</li>
+            <li onclick="showPage('recurring')" class="nav-item" data-page="recurring" id="nav-label-recurring">Plan</li>
             <li onclick="showPage('cards')" class="nav-item" data-page="cards">Cards</li>
             <li onclick="showPage('stats')" class="nav-item" data-page="stats">Stats</li>
             <li onclick="showPage('admin')" class="nav-item" data-page="admin">Admin</li>
@@ -158,7 +163,8 @@
 
     <div class="mobile-nav">
         <div onclick="showPage('dashboard')" data-page="dashboard"><i class="fas fa-house"></i><span>Dash</span></div>
-        <div onclick="showPage('side-hustle')" data-page="side-hustle"><i class="fas fa-bolt"></i><span>Quest</span></div>
+        <div onclick="showPage('side-hustle')" data-page="side-hustle"><i class="fas fa-bolt"></i><span>Hustle</span></div>
+        <div onclick="showPage('recurring')" data-page="recurring"><i class="fas fa-arrows-rotate"></i><span>Plan</span></div>
         <div onclick="showPage('cards')" data-page="cards"><i class="fas fa-credit-card"></i><span>Cards</span></div>
         <div onclick="showPage('stats')" data-page="stats"><i class="fas fa-chart-simple"></i><span>Stats</span></div>
         <div onclick="showPage('admin')" data-page="admin"><i class="fas fa-user-gear"></i><span>Admin</span></div>
@@ -182,17 +188,42 @@
             <div class="card admin-only">
                 <h3 id="hustle-form-title">LOG ENTRY</h3>
                 <form id="payment-form">
+                    <input type="hidden" id="edit-id">
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
                         <input type="number" id="pay-amount" placeholder="CREDITS" step="0.01" required>
                         <select id="pay-category"><option value="side">SIDE QUEST</option><option value="main">MAIN MISSION</option></select>
                     </div>
                     <input type="text" id="pay-source" placeholder="SOURCE">
                     <input type="date" id="pay-date" required>
+                    <textarea id="pay-notes" placeholder="MISSION NOTES..."></textarea>
                     <label id="label-taxable-wrap" style="display:flex; align-items:center; gap:12px; cursor:pointer"><input type="checkbox" id="pay-taxable" style="width:auto"> Taxable</label>
-                    <button type="submit" id="btn-save-loot">SAVE DATA</button>
+                    <div style="display:flex; gap:10px">
+                        <button type="submit" id="btn-save-loot" style="flex:1">SAVE DATA</button>
+                        <button type="button" onclick="resetPaymentForm()" id="btn-cancel-edit" class="secondary" style="display:none">CANCEL</button>
+                    </div>
                 </form>
             </div>
             <div class="card"><h3 id="label-mission-log">MISSION LOG</h3><div id="payment-list"></div><div class="pagination"><button onclick="changePage('payment', -1)" class="secondary"><i class="fas fa-chevron-left"></i></button><span id="payment-page-label">P1</span><button onclick="changePage('payment', 1)" class="secondary"><i class="fas fa-chevron-right"></i></button></div></div>
+        </div>
+
+        <!-- Recurring Page -->
+        <div id="page-recurring" class="page">
+            <div class="card admin-only">
+                <h3 id="label-recurring-title">AUTOMATION PLAN</h3>
+                <form id="recurring-form">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                        <input type="number" id="rec-amount" placeholder="CREDITS" step="0.01" required>
+                        <select id="rec-category"><option value="side">SIDE QUEST</option><option value="main">MAIN MISSION</option></select>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                        <input type="text" id="rec-source" placeholder="SOURCE" required>
+                        <select id="rec-freq"><option value="daily">DAILY</option><option value="weekly">WEEKLY</option><option value="monthly">MONTHLY</option></select>
+                    </div>
+                    <input type="date" id="rec-next-date" required>
+                    <button type="submit" id="btn-save-recurring">ACTIVATE PLAN</button>
+                </form>
+            </div>
+            <div id="recurring-list"></div>
         </div>
 
         <!-- Cards -->
@@ -217,47 +248,26 @@
 
         <!-- Admin -->
         <div id="page-admin" class="page">
-            <div class="card" style="text-align: center;"><h3 id="label-share-access">CO-OP ACCESS</h3><div id="qr-container"></div><div id="admin-host-url" style="margin-top:10px; font-family:monospace; font-size:0.8em"></div></div>
-            
+            <div class="card" style="text-align: center;"><h3 id="label-share-access">CO-OP ACCESS</h3><div id="qr-container"></div><div id="admin-host-url" style="margin-top:15px; font-family:monospace; font-size:0.8em"></div></div>
             <div class="card admin-only">
                 <h3 id="label-user-mgmt">USER MANAGEMENT</h3>
-                <form id="user-form" style="margin-bottom: 20px;">
-                    <input type="text" id="new-user-name" placeholder="USERNAME" required>
-                    <input type="password" id="new-user-pass" placeholder="PASSWORD" required>
-                    <select id="new-user-role"><option value="user">VIEWER</option><option value="admin">ADMIN</option></select>
-                    <button type="submit" id="btn-create-player">CREATE PLAYER</button>
-                </form>
+                <form id="user-form" style="margin-bottom: 20px;"><input type="text" id="new-user-name" placeholder="USERNAME" required><input type="password" id="new-user-pass" placeholder="PASSWORD" required><select id="new-user-role"><option value="user">VIEWER</option><option value="admin">ADMIN</option></select><button type="submit" id="btn-create-player">CREATE PLAYER</button></form>
                 <div id="admin-user-list"></div>
             </div>
-
             <div class="card">
                 <h3 id="label-security">SECURITY</h3>
-                <form id="password-form">
-                    <input type="password" id="old-password" placeholder="OLD KEY" required>
-                    <input type="password" id="new-password" placeholder="NEW KEY" required>
-                    <button type="submit" id="btn-update-key" class="secondary">UPDATE KEY</button>
-                </form>
+                <form id="password-form"><input type="password" id="old-password" placeholder="OLD KEY" required><input type="password" id="new-password" placeholder="NEW KEY" required><button type="submit" id="btn-update-key" class="secondary">UPDATE KEY</button></form>
                 <button onclick="logout()" class="danger" id="btn-logout" style="margin-top:15px; width:100%">TERMINATE SESSION</button>
             </div>
-
             <div class="grid admin-only">
                 <div class="card"><h3>DATA</h3><div style="display:grid; gap:10px; grid-template-columns: 1fr 1fr;"><button onclick="exportDB()" class="secondary">SAVE</button><button onclick="document.getElementById('import-file').click()" class="secondary">LOAD</button><input type="file" id="import-file" style="display:none" onchange="importDB(this)"></div></div>
                 <div class="card"><h3>SYSTEM</h3><button onclick="testNotification()" class="secondary">PING</button></div>
             </div>
-
-            <!-- Moved Debug Console here -->
             <div class="card admin-only">
-                <h3 id="label-debug-title">DEBUG CONSOLE</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px">
-                    <button onclick="copyLogs()" class="secondary" id="btn-copy-debug">COPY ALL</button>
-                    <button onclick="clearAllLogs()" class="danger" id="btn-clear-debug">CLEAR ALL</button>
-                </div>
-                <div class="terminal" id="debug-terminal"></div>
-                <div class="pagination">
-                    <button onclick="changePage('alert', -1)" class="secondary"><i class="fas fa-chevron-left"></i></button>
-                    <span id="alert-page-label">P1</span>
-                    <button onclick="changePage('alert', 1)" class="secondary"><i class="fas fa-chevron-right"></i></button>
-                </div>
+                <h3 id="label-audit-trail">AUDIT TRAIL</h3>
+                <button onclick="copyLogs()" class="secondary" style="margin-bottom:10px; width:100%" id="btn-copy-logs">COPY ALL LOGS</button>
+                <div id="debug-terminal" class="terminal"></div>
+                <div class="pagination"><button onclick="changePage('alert', -1)" class="secondary"><i class="fas fa-chevron-left"></i></button><span id="alert-page-label">P1</span><button onclick="changePage('alert', 1)" class="secondary"><i class="fas fa-chevron-right"></i></button></div>
             </div>
         </div>
     </div>
@@ -273,34 +283,34 @@
 
         const dict = {
             retro: {
-                brand: 'WEALTHQUEST', hustleNav: 'QUEST', mainIncome: 'MAIN REVENUE', sideIncome: 'GRIND REWARD', bossBills: '<i class="fas fa-skull-crossbones"></i> BOSS BILLS',
+                brand: 'WEALTHQUEST', hustleNav: 'QUEST', recNav: 'PLAN', mainIncome: 'MAIN REVENUE', sideIncome: 'GRIND REWARD', bossBills: '<i class="fas fa-skull-crossbones"></i> BOSS BILLS',
                 recentLoot: '<i class="fas fa-scroll"></i> RECENT LOOT', hustleForm: 'LOG DATA', hustleJournal: 'MISSION LOG',
                 hustleAmount: 'CREDITS', btnSaveLoot: 'SAVE DATA', addCreditor: 'ADD CREDITOR', cardName: 'ENEMY NAME', cardBalance: 'DMG',
                 btnCommitCard: 'COMMIT', statsTrends: 'XP GAIN', statsSplit: 'DEBT SPREAD', adminShare: 'CO-OP ACCESS', adminUser: 'USER MANAGEMENT',
                 btnCreatePlayer: 'CREATE PLAYER', adminSecurity: 'SECURITY', oldKey: 'OLD KEY', newKey: 'NEW KEY', btnUpdateKey: 'UPDATE KEY',
                 btnLogout: '<i class="fas fa-skull"></i> TERMINATE SESSION', debugTitle: 'SYSTEM TERMINAL', btnCopyDebug: 'DUMP BUFFER',
                 btnClearDebug: 'PURGE MEM', authTitle: '<i class="fas fa-gamepad"></i> WEALTHQUEST', authMsg: 'INSERT CREDENTIALS', btnLogin: 'INITIALIZE',
-                catMain: 'MAIN MISSION', catSide: 'SIDE QUEST', labelTaxable: 'Taxable', icon: 'ghost'
+                catMain: 'MAIN MISSION', catSide: 'SIDE QUEST', labelTaxable: 'Taxable', icon: 'ghost', recTitle: 'AUTOMATION PLAN', btnSaveRec: 'ACTIVATE PLAN', adminAudit: 'AUDIT TRAIL'
             },
             modern: {
-                brand: 'WealthQuest Financial', hustleNav: 'Hustle', mainIncome: 'MAIN INCOME', sideIncome: 'SIDE INCOME', bossBills: '<i class="fas fa-bell"></i> UPCOMING BILLS',
+                brand: 'WealthQuest Financial', hustleNav: 'Hustle', recNav: 'Recurring', mainIncome: 'MAIN INCOME', sideIncome: 'SIDE INCOME', bossBills: '<i class="fas fa-bell"></i> UPCOMING BILLS',
                 recentLoot: '<i class="fas fa-history"></i> RECENT REVENUE', hustleForm: 'LOG REVENUE', hustleJournal: 'REVENUE JOURNAL',
                 hustleAmount: 'AMOUNT', btnSaveLoot: 'COMMIT RECORD', addCreditor: 'REGISTER CREDITOR', cardName: 'ENTITY NAME', cardBalance: 'BALANCE',
                 btnCommitCard: 'SAVE PORTFOLIO', statsTrends: 'MONTHLY TRENDS', statsSplit: 'BALANCE SPLIT', adminShare: 'SHARE ACCESS', adminUser: 'USER ACCOUNTS',
                 btnCreatePlayer: 'CREATE USER', adminSecurity: 'ACCOUNT SECURITY', oldKey: 'OLD PASSWORD', newKey: 'NEW PASSWORD', btnUpdateKey: 'CHANGE PASSWORD',
                 btnLogout: '<i class="fas fa-power-off"></i> SIGN OUT', debugTitle: 'SYSTEM DIAGNOSTICS', btnCopyDebug: 'COPY LOGS',
                 btnClearDebug: 'CLEAR ALL', authTitle: '<i class="fas fa-shield-halved"></i> WealthQuest', authMsg: 'PLEASE SIGN IN', btnLogin: 'SIGN IN',
-                catMain: 'MAIN INCOME', catSide: 'SIDE HUSTLE', labelTaxable: 'Taxable', icon: 'shield-halved'
+                catMain: 'MAIN INCOME', catSide: 'SIDE HUSTLE', labelTaxable: 'Taxable', icon: 'shield-halved', recTitle: 'RECURRING ENTRIES', btnSaveRec: 'SAVE PATTERN', adminAudit: 'SYSTEM LOGS'
             },
             pokemon: {
-                brand: 'POKÉQUEST', hustleNav: 'TRAIN', mainIncome: 'LEAGUE PRIZE', sideIncome: 'WILD LOOT', bossBills: '<i class="fas fa-burst"></i> GYM LEADERS',
+                brand: 'POKÉQUEST', hustleNav: 'TRAIN', recNav: 'TIMER', mainIncome: 'LEAGUE PRIZE', sideIncome: 'WILD LOOT', bossBills: '<i class="fas fa-burst"></i> GYM LEADERS',
                 recentLoot: '<i class="fas fa-bag-shopping"></i> RECENT CATCHES', hustleForm: 'LOG EXP GAIN', hustleJournal: 'TRAINER JOURNAL',
                 hustleAmount: 'POKÉDOLLARS', btnSaveLoot: 'SAVE TO PC', addCreditor: 'NEW RIVAL', cardName: 'TRAINER NAME', cardBalance: 'BATTLE DEBT',
                 btnCommitCard: 'ADD TO DEX', statsTrends: 'LEVEL GROWTH', statsSplit: 'TEAM BALANCE', adminShare: 'LINK CABLE', adminUser: 'TRAINER CLUB',
                 btnCreatePlayer: 'ADD TRAINER', adminSecurity: 'TRAINER ID', oldKey: 'OLD PASS', newKey: 'NEW PASS', btnUpdateKey: 'UPDATE ID',
                 btnLogout: '<i class="fas fa-door-open"></i> LEAVE CENTER', debugTitle: 'SYSTEM POKÉDEX', btnCopyDebug: 'EXPORT DATA',
                 btnClearDebug: 'RELEASE ALL', authTitle: '<i class="fas fa-circle-dot"></i> POKÉQUEST', authMsg: 'HELLO TRAINER!', btnLogin: 'GO!',
-                catMain: 'ELITE FOUR', catSide: 'WILD BATTLE', labelTaxable: 'Held Item', icon: 'circle-dot'
+                catMain: 'ELITE FOUR', catSide: 'WILD BATTLE', labelTaxable: 'Held Item', icon: 'circle-dot', recTitle: 'DAY CARE SCHEDULE', btnSaveRec: 'DEPOSIT PLAN', adminAudit: 'JOURNAL HISTORY'
             }
         };
 
@@ -309,6 +319,7 @@
             const d = dict[t];
             document.getElementById('brand-nav').innerHTML = `<i class="fas fa-${d.icon}"></i> ` + d.brand;
             document.getElementById('nav-label-hustle').textContent = d.hustleNav;
+            document.getElementById('nav-label-recurring').textContent = d.recNav;
             document.getElementById('label-main-income').textContent = d.mainIncome;
             document.getElementById('label-side-income').textContent = d.sideIncome;
             document.getElementById('label-boss-bills').innerHTML = d.bossBills;
@@ -327,27 +338,24 @@
             document.getElementById('label-user-mgmt').textContent = d.adminUser;
             document.getElementById('btn-create-player').textContent = d.btnCreatePlayer;
             document.getElementById('label-security').textContent = d.adminSecurity;
+            document.getElementById('old-password').placeholder = d.oldKey;
+            document.getElementById('new-password').placeholder = d.newKey;
             document.getElementById('btn-update-key').textContent = d.btnUpdateKey;
             document.getElementById('btn-logout').innerHTML = d.btnLogout;
-            document.getElementById('label-debug-title').textContent = d.debugTitle;
-            document.getElementById('btn-copy-debug').textContent = d.btnCopyDebug;
-            document.getElementById('btn-clear-debug').textContent = d.btnClearDebug;
+            document.getElementById('label-audit-trail').textContent = d.adminAudit;
+            document.getElementById('btn-copy-logs').textContent = d.btnCopyDebug;
             document.getElementById('auth-title').innerHTML = d.authTitle;
             document.getElementById('auth-msg').textContent = d.authMsg;
             document.getElementById('btn-login').textContent = d.btnLogin;
-            const cats = document.getElementById('pay-category');
-            cats.options[0].text = d.catSide;
-            cats.options[1].text = d.catMain;
+            document.getElementById('label-recurring-title').textContent = d.recTitle;
+            document.getElementById('btn-save-recurring').textContent = d.btnSaveRec;
+            const cats = [document.getElementById('pay-category'), document.getElementById('rec-category')];
+            cats.forEach(c => { if(c) { c.options[0].text = d.catSide; c.options[1].text = d.catMain; } });
             document.getElementById('label-taxable-wrap').innerHTML = `<input type="checkbox" id="pay-taxable" style="width:auto"> ` + d.labelTaxable;
             if (charts.income) updateDashboard(); 
         }
 
-        function toggleTheme() { 
-            const themes = ['modern', 'retro', 'pokemon'];
-            theme = themes[(themes.indexOf(theme) + 1) % themes.length];
-            localStorage.setItem('vanguard_theme', theme); 
-            applyTheme(theme); 
-        }
+        function toggleTheme() { const themes = ['modern', 'retro', 'pokemon']; theme = themes[(themes.indexOf(theme) + 1) % themes.length]; localStorage.setItem('vanguard_theme', theme); applyTheme(theme); }
 
         async function api(path, options = {}) {
             options.headers = options.headers || {};
@@ -386,12 +394,26 @@
                     document.getElementById('dash-side-hustle').textContent = `$${cash.side_hustle.toFixed(2)}`;
                     document.getElementById('dash-card-summary').innerHTML = cards.slice(0,5).map(c => `<div class="list-item"><span>${c.name}</span><span class="badge ${c.days_remaining <= c.alert_threshold ? 'badge-urgent' : 'badge-success'}">${c.days_remaining}D</span></div>`).join('');
                     const recent = await api('/side-hustle/payments?limit=5');
-                    document.getElementById('dash-recent-payments').innerHTML = recent.map(p => `<div class="list-item"><span>${p.source || (theme==='retro'?'LOOT':'INCOME')}</span><strong>$${p.amount.toFixed(2)}</strong></div>`).join('');
+                    document.getElementById('dash-recent-payments').innerHTML = recent.map(p => `<div class="list-item"><span>${p.source || 'LOOT'}</span><strong>$${p.amount.toFixed(2)}</strong></div>`).join('');
                 }
                 if (currentTab === 'side-hustle') {
                     const payments = await api(`/side-hustle/payments?limit=8&offset=${pages.payment * 8}`);
-                    document.getElementById('payment-list').innerHTML = payments.map(p => `<div class="list-item"><div><strong>${p.source || (theme==='retro'?'LOOT':'INCOME')}</strong> [${p.category.toUpperCase()}]<br><small>${p.date}</small></div><strong>$${p.amount.toFixed(2)}</strong></div>`).join('');
+                    document.getElementById('payment-list').innerHTML = payments.map(p => `<div class="list-item">
+                        <div style="flex:1"><strong>${p.source}</strong><br><small>${p.date} | ${p.category.toUpperCase()}</small>${p.notes ? `<br><i style="font-size:0.8em">${p.notes}</i>` : ''}</div>
+                        <strong>$${p.amount.toFixed(2)}</strong>
+                        ${userRole==='admin'?`<button class="delete-btn edit" style="margin-left:10px" onclick="editPayment(${JSON.stringify(p).replace(/"/g, '&quot;')})"><i class="fas fa-pen"></i></button>`:''}
+                    </div>`).join('');
                     document.getElementById('payment-page-label').textContent = `P${pages.payment + 1}`;
+                }
+                if (currentTab === 'recurring') {
+                    const rec = await api('/recurring');
+                    document.getElementById('recurring-list').innerHTML = rec.map(r => `<div class="card">
+                        <div style="display:flex; justify-content:space-between">
+                            <div><strong>${r.source}</strong><br><small>${r.frequency.toUpperCase()} | NEXT: ${r.next_run_date}</small></div>
+                            <strong>$${r.amount.toFixed(2)}</strong>
+                        </div>
+                        ${userRole==='admin'?`<button class="delete-btn" style="width:100%; margin-top:10px" onclick="deleteRecurring(${r.id})">CANCEL PLAN</button>`:''}
+                    </div>`).join('') || '<p>No active plans.</p>';
                 }
                 if (currentTab === 'cards') {
                     document.getElementById('full-card-list').innerHTML = cards.map(c => `<div class="card"><div style="display:flex; justify-content:space-between"><div><h3 style="margin:0">${c.name}</h3><small>DUE: ${c.due_date}</small></div><div class="stat-value" style="font-size:1.2em">$${c.balance.toFixed(2)}</div></div><div class="list-item" style="border:none; padding-bottom:0"><span>${c.days_remaining} DAYS</span>${userRole==='admin'?`<button class="delete-btn" onclick="deleteCard(${c.id})"><i class="fas fa-trash"></i></button>`:''}</div></div>`).join('');
@@ -407,14 +429,53 @@
         }
 
         async function renderCharts(cards) {
-            const trend = await api('/side-hustle/stats/monthly-trends');
+            const trend = await api('/side-hustle/stats/monthly-trends') || [];
+            const isRetro = theme === 'retro';
             const colors = theme === 'retro' ? ['#ff00ff', '#00ffff'] : (theme === 'pokemon' ? ['#3b4cca', '#ffcb05'] : ['#3498db', '#e74c3c']);
             if (charts.income) charts.income.destroy();
-            charts.income = new Chart(document.getElementById('incomeChart'), { type: 'bar', data: { labels: trend.map(t => t.month), datasets: [{ data: trend.map(t => t.total), backgroundColor: colors[0] }] }, options: { responsive: true, maintainAspectRatio: false } });
+            charts.income = new Chart(document.getElementById('incomeChart'), { type: 'bar', data: { labels: trend.map(t => t.month || '???'), datasets: [{ data: trend.map(t => t.total || 0), backgroundColor: colors[0], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
             if (charts.balance) charts.balance.destroy();
             charts.balance = new Chart(document.getElementById('balanceChart'), { type: 'doughnut', data: { labels: cards.map(c => c.name), datasets: [{ data: cards.map(c => c.balance), backgroundColor: colors.concat(['#39ff14', '#ffff00', '#ef5350']) }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%' } });
         }
 
+        function editPayment(p) {
+            document.getElementById('edit-id').value = p.id;
+            document.getElementById('pay-amount').value = p.amount;
+            document.getElementById('pay-source').value = p.source;
+            document.getElementById('pay-date').value = p.date;
+            document.getElementById('pay-category').value = p.category;
+            document.getElementById('pay-notes').value = p.notes || '';
+            document.getElementById('pay-taxable').checked = p.tax_flag === 1;
+            document.getElementById('btn-cancel-edit').style.display = 'block';
+            document.getElementById('btn-save-loot').textContent = 'UPDATE DATA';
+            window.scrollTo(0,0);
+        }
+
+        function resetPaymentForm() {
+            document.getElementById('edit-id').value = '';
+            document.getElementById('payment-form').reset();
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+            document.getElementById('btn-save-loot').textContent = dict[theme].btnSaveLoot;
+            setDefaultDates();
+        }
+
+        document.getElementById('payment-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id').value;
+            const body = JSON.stringify({ amount: parseFloat(document.getElementById('pay-amount').value), source: document.getElementById('pay-source').value, date: document.getElementById('pay-date').value, category: document.getElementById('pay-category').value, tax_flag: document.getElementById('pay-taxable').checked ? 1 : 0, notes: document.getElementById('pay-notes').value });
+            if (editId) await api(`/side-hustle/payments/${editId}`, { method: 'PUT', body });
+            else await api('/side-hustle/payments', { method: 'POST', body });
+            resetPaymentForm(); updateDashboard();
+        };
+
+        document.getElementById('recurring-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const body = JSON.stringify({ amount: parseFloat(document.getElementById('rec-amount').value), source: document.getElementById('rec-source').value, category: document.getElementById('rec-category').value, frequency: document.getElementById('rec-freq').value, next_run_date: document.getElementById('rec-next-date').value });
+            await api('/recurring', { method: 'POST', body });
+            e.target.reset(); setDefaultDates(); updateDashboard();
+        };
+
+        async function deleteRecurring(id) { if (confirm('CANCEL PLAN?')) { await api(`/recurring/${id}`, { method: 'DELETE' }); updateDashboard(); } }
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData();
@@ -427,7 +488,7 @@
                 document.getElementById('auth-screen').style.display = 'none'; showPage('dashboard');
             } else if (res.status === 401) {
                 const regRes = await fetch(`${API}/api/v1/auth/register`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value}) });
-                if (regRes.ok) alert('INITIALIZED. SIGN IN NOW.');
+                if (regRes.ok) alert('SYSTEM INITIALIZED. SIGN IN NOW.');
             }
         };
 
@@ -451,12 +512,6 @@
             e.preventDefault();
             const res = await api(`/auth/change-password?old_password=${document.getElementById('old-password').value}&new_password=${document.getElementById('new-password').value}`, { method: 'POST' });
             if (res) { alert('KEY UPDATED'); e.target.reset(); }
-        };
-
-        document.getElementById('payment-form').onsubmit = async (e) => {
-            e.preventDefault();
-            await api('/side-hustle/payments', { method: 'POST', body: JSON.stringify({ amount: parseFloat(document.getElementById('pay-amount').value), source: document.getElementById('pay-source').value, date: document.getElementById('pay-date').value, category: document.getElementById('pay-category').value, tax_flag: document.getElementById('pay-taxable').checked ? 1 : 0 }) });
-            e.target.reset(); setDefaultDates(); showPage('dashboard');
         };
 
         document.getElementById('card-form').onsubmit = async (e) => {

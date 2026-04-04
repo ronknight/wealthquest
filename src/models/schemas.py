@@ -7,11 +7,31 @@ class PaymentBase(BaseModel):
     source: Optional[str] = None
     category: Optional[str] = "side"
     tax_flag: Optional[int] = 0
+    notes: Optional[str] = None
 
 class PaymentCreate(PaymentBase):
     pass
 
 class Payment(PaymentBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class RecurringBase(BaseModel):
+    amount: float
+    source: str
+    category: Optional[str] = "side"
+    frequency: str
+    next_run_date: str
+    tax_flag: Optional[int] = 0
+    notes: Optional[str] = None
+    is_active: Optional[int] = 1
+
+class RecurringCreate(RecurringBase):
+    pass
+
+class Recurring(RecurringBase):
     id: int
 
     class Config:

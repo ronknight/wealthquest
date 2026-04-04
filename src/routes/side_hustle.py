@@ -18,7 +18,8 @@ def create_payment(payment: schemas.PaymentCreate, current_user: database.User =
         date=payment.date,
         source=payment.source,
         category=payment.category,
-        tax_flag=payment.tax_flag
+        tax_flag=payment.tax_flag,
+        notes=payment.notes
     )
     db.add(db_payment)
     db.commit()
@@ -52,6 +53,7 @@ def update_payment(id: int, payment: schemas.PaymentCreate, current_user: databa
     db_payment.source = payment.source
     db_payment.category = payment.category
     db_payment.tax_flag = payment.tax_flag
+    db_payment.notes = payment.notes
     
     db.commit()
     db.refresh(db_payment)

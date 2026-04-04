@@ -14,6 +14,20 @@ class Transaction(Base):
     source = Column(Text)
     category = Column(Text, default="side") # 'main' or 'side'
     tax_flag = Column(Integer, default=0)
+    notes = Column(Text) # Added for comprehensive entries
+
+class RecurringPattern(Base):
+    __tablename__ = "recurring_patterns"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    amount = Column(Float, nullable=False)
+    source = Column(Text, nullable=False)
+    category = Column(Text, default="side")
+    frequency = Column(Text, nullable=False) # 'daily', 'weekly', 'monthly'
+    next_run_date = Column(Text, nullable=False)
+    tax_flag = Column(Integer, default=0)
+    notes = Column(Text)
+    is_active = Column(Integer, default=1)
 
 class Card(Base):
     __tablename__ = "cards"

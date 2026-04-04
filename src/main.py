@@ -5,19 +5,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from src.routes import side_hustle, cards, alerts, auth, admin
+from src.routes import side_hustle, cards, alerts, auth, admin, recurring
 from src.services.alerts import check_and_trigger_alerts
+from src.services.recurring import process_recurring_transactions
 from src.models.database import SessionLocal, create_tables
 
 # Ensure tables exist
 create_tables()
 
 async def alert_scheduler():
-    """Background task that runs every hour to check for alert conditions."""
+    """Background task that runs every hour to check for alert conditions and recurring items."""
     while True:
         db = SessionLocal()
         try:
             check_and_trigger_alerts(db)
+            process_recurring_transactions(db)
         finally:
             db.close()
         # Run every hour
@@ -57,6 +59,7 @@ app.include_router(admin.router)
 app.include_router(side_hustle.router)
 app.include_router(cards.router)
 app.include_router(alerts.router)
+app.include_router(recurring.router)
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
