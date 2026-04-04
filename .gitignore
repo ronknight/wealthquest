@@ -1,0 +1,31 @@
+# WealthQuest Git Ignore
+
+# Database and Data
+*.db
+*.db-journal
+*.json
+!openspec/**/*.md
+
+# Logs and Process IDs
+*.log
+*.pid
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+env/
+venv/
+.env
+
+# System
+.DS_Store
+Thumbs.db
+
+# Termux / Project specific
+init.sh
+start.sh
+stop.sh
+# Keep scripts but ignore local env changes if any

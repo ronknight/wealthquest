@@ -1,0 +1,17 @@
+# FastAPI
+fastapi>=0.68.0
+# Uvicorn
+uvicorn>=0.15.0
+# SQLAlchemy
+sqlalchemy>=1.4.0
+# Pydantic
+pydantic>=1.10.0
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.18.0
+httpx>=0.23.0
+# Auth
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+python-multipart>=0.0.5
+# SQLite

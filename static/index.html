@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WealthQuest</title>
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a2a3a;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --white: #ffffff;
+            --secondary: #64748b;
+            --border: #e2e8f0;
+            --font-main: 'Inter', sans-serif;
+            --font-heading: 'Inter', sans-serif;
+            --glow: none;
+            --radius: 12px;
+        }
+
+        [data-theme='retro'] {
+            --primary: #ff00ff;
+            --accent: #00ffff;
+            --success: #39ff14;
+            --warning: #ffff00;
+            --danger: #ff3131;
+            --bg: #050505;
+            --text: #00ffff;
+            --white: #1a1a1a;
+            --secondary: #bd00ff;
+            --border: #ff00ff;
+            --font-main: 'monospace';
+            --font-heading: 'Press Start 2P', cursive;
+            --glow: 0 0 10px rgba(255, 0, 255, 0.5);
+            --radius: 0px;
+        }
+
+        [data-theme='pokemon'] {
+            --primary: #3b4cca;
+            --accent: #ffcb05;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #ef5350;
+            --bg: #f0f0f0;
+            --text: #2c3e50;
+            --white: #ffffff;
+            --secondary: #7f8c8d;
+            --border: #3b4cca;
+            --font-main: 'Quicksand', sans-serif;
+            --font-heading: 'Quicksand', sans-serif;
+            --glow: 0 4px 0px rgba(0,0,0,0.1);
+            --radius: 25px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { font-family: var(--font-main); background: var(--bg); color: var(--text); margin: 0; padding: 0; padding-bottom: 90px; line-height: 1.5; transition: 0.3s; }
+        
+        [data-theme='retro']::before {
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2001; background-size: 100% 4px, 3px 100%; pointer-events: none;
+        }
+
+        #auth-screen { position: fixed; inset: 0; background: var(--primary); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: var(--white); padding: 40px; border-radius: var(--radius); width: 100%; max-width: 400px; border: 3px solid var(--border); }
+
+        nav { background: var(--primary); color: white; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 65px; border-bottom: 3px solid var(--border); }
+        .nav-brand { font-family: var(--font-heading); font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .nav-links { display: flex; list-style: none; margin: 0; padding: 0; height: 100%; }
+        .nav-links li { display: flex; align-items: center; padding: 0 15px; cursor: pointer; font-weight: 700; font-size: 0.8em; height: 100%; border-bottom: 4px solid transparent; text-transform: uppercase; }
+        .nav-links li.active { border-bottom-color: var(--accent); color: var(--accent); }
+
+        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); box-shadow: 0 -4px 20px rgba(0,0,0,0.08); grid-template-columns: repeat(5, 1fr); z-index: 1001; height: 75px; padding-bottom: env(safe-area-inset-bottom); border-top: 2px solid var(--border); }
+        .mobile-nav div { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.6em; font-weight: 700; color: var(--secondary); cursor: pointer; text-transform: uppercase; font-family: var(--font-heading); }
+        .mobile-nav div.active { color: var(--accent); }
+        .mobile-nav i { font-size: 1.2em; margin-bottom: 5px; }
+
+        .container { max-width: 1100px; margin: 20px auto; padding: 0 20px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--white); padding: 24px; border-radius: var(--radius); margin-bottom: 20px; border: 2px solid var(--border); box-shadow: var(--glow); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        
+        h1, h2, h3 { font-family: var(--font-heading); text-transform: uppercase; font-size: 0.8em; letter-spacing: 1px; color: var(--primary); }
+        .stat-header { font-size: 0.6em; font-weight: 700; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; display: block; font-family: var(--font-heading); }
+        .stat-value { font-size: 1.8em; font-weight: 900; color: var(--text); margin: 0; display: flex; align-items: center; gap: 10px; text-shadow: var(--glow); }
+        .stat-value.success { color: var(--success); }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
+        
+        form { display: flex; flex-direction: column; gap: 16px; }
+        input, select, button { padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; width: 100%; font-family: var(--font-main); background: var(--white); color: var(--text); font-weight: 700; }
+        button { background: var(--accent); color: var(--primary); border: none; cursor: pointer; text-transform: uppercase; font-family: var(--font-heading); font-size: 0.6em; transition: 0.2s; }
+        button.secondary { background: var(--bg); color: var(--primary); border: 2px solid var(--border); }
+        button.danger { background: var(--danger); color: white; }
+        .delete-btn { width: auto; padding: 8px 14px; font-size: 0.5em; background: transparent; color: var(--danger); border: 2px solid var(--danger); min-width: 40px; }
+
+        .badge { padding: 4px 8px; border-radius: 20px; font-size: 0.5em; font-weight: 800; text-transform: uppercase; font-family: var(--font-heading); border: 1px solid currentColor; }
+        .badge-urgent { color: var(--danger); }
+        .badge-success { color: var(--success); }
+
+        #qr-container { background: white; padding: 10px; display: inline-block; border: 4px double var(--border); border-radius: var(--radius); }
+        .theme-toggle { cursor: pointer; font-size: 1.2em; color: var(--accent); margin-right: 15px; }
+
+        .admin-only { display: none; }
+        body[data-role='admin'] .admin-only { display: block; }
+        body[data-role='viewer'] .admin-only { display: none !important; }
+
+        .terminal { background: #000; color: #39ff14; font-family: 'monospace'; padding: 20px; border-radius: 8px; border: 2px solid #333; max-height: 400px; overflow-y: auto; font-size: 0.8em; }
+        .terminal-line { margin-bottom: 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 4px; }
+        .pagination { display: flex; gap: 10px; align-items: center; margin-top: 15px; justify-content: center; }
+        .pagination button { width: auto; padding: 8px 15px; }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-nav { display: grid; }
+        }
+    </style>
+</head>
+<body data-theme="modern" data-role="viewer">
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+        <div class="auth-card">
+            <h2 id="auth-title" style="text-align: center; margin-top: 0;"><i class="fas fa-circle-dot"></i> WEALTHQUEST</h2>
+            <p id="auth-msg" style="text-align: center; color: var(--secondary); margin-bottom: 25px; font-size: 0.6em;">INSERT CREDENTIALS</p>
+            <form id="login-form">
+                <input type="text" id="username" placeholder="USERNAME" required autocomplete="username">
+                <input type="password" id="password" placeholder="PASSWORD" required autocomplete="current-password">
+                <button type="submit" id="btn-login">INITIALIZE</button>
+            </form>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-brand" id="brand-nav" onclick="showPage('dashboard')"><i class="fas fa-ghost"></i> WEALTHQUEST</div>
+        <ul class="nav-links">
+            <li onclick="showPage('dashboard')" class="nav-item" data-page="dashboard">Dash</li>
+            <li onclick="showPage('side-hustle')" class="nav-item" data-page="side-hustle" id="nav-label-hustle">Quest</li>
+            <li onclick="showPage('cards')" class="nav-item" data-page="cards">Cards</li>
+            <li onclick="showPage('stats')" class="nav-item" data-page="stats">Stats</li>
+            <li onclick="showPage('admin')" class="nav-item" data-page="admin">Admin</li>
+        </ul>
+        <div style="display:flex; align-items:center;">
+            <i class="fas fa-palette theme-toggle" onclick="toggleTheme()" title="Change Theme"></i>
+            <li onclick="logout()" style="color: var(--danger); list-style:none; cursor:pointer;"><i class="fas fa-power-off"></i></li>
+        </div>
+    </nav>
+
+    <div class="mobile-nav">
+        <div onclick="showPage('dashboard')" data-page="dashboard"><i class="fas fa-house"></i><span>Dash</span></div>
+        <div onclick="showPage('side-hustle')" data-page="side-hustle"><i class="fas fa-bolt"></i><span>Quest</span></div>
+        <div onclick="showPage('cards')" data-page="cards"><i class="fas fa-credit-card"></i><span>Cards</span></div>
+        <div onclick="showPage('stats')" data-page="stats"><i class="fas fa-chart-simple"></i><span>Stats</span></div>
+        <div onclick="showPage('admin')" data-page="admin"><i class="fas fa-user-gear"></i><span>Admin</span></div>
+    </div>
+
+    <div class="container">
+        <!-- Dashboard -->
+        <div id="page-dashboard" class="page">
+            <div class="grid">
+                <div class="card stat-card"><span class="stat-header" id="label-main-income">MAIN REVENUE</span><div id="dash-main-income" class="stat-value success">$0.00</div></div>
+                <div class="card stat-card"><span class="stat-header" id="label-side-income">GRIND REWARD</span><div id="dash-side-hustle" class="stat-value success">$0.00</div></div>
+            </div>
+            <div class="grid">
+                <div class="card"><h3 id="label-boss-bills">BOSS BILLS</h3><div id="dash-card-summary"></div></div>
+                <div class="card"><h3 id="label-recent-loot">RECENT LOOT</h3><div id="dash-recent-payments"></div></div>
+            </div>
+        </div>
+
+        <!-- Side Hustle -->
+        <div id="page-side-hustle" class="page">
+            <div class="card admin-only">
+                <h3 id="hustle-form-title">LOG ENTRY</h3>
+                <form id="payment-form">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                        <input type="number" id="pay-amount" placeholder="CREDITS" step="0.01" required>
+                        <select id="pay-category"><option value="side">SIDE QUEST</option><option value="main">MAIN MISSION</option></select>
+                    </div>
+                    <input type="text" id="pay-source" placeholder="SOURCE">
+                    <input type="date" id="pay-date" required>
+                    <label id="label-taxable-wrap" style="display:flex; align-items:center; gap:12px; cursor:pointer"><input type="checkbox" id="pay-taxable" style="width:auto"> Taxable</label>
+                    <button type="submit" id="btn-save-loot">SAVE DATA</button>
+                </form>
+            </div>
+            <div class="card"><h3 id="label-mission-log">MISSION LOG</h3><div id="payment-list"></div><div class="pagination"><button onclick="changePage('payment', -1)" class="secondary"><i class="fas fa-chevron-left"></i></button><span id="payment-page-label">P1</span><button onclick="changePage('payment', 1)" class="secondary"><i class="fas fa-chevron-right"></i></button></div></div>
+        </div>
+
+        <!-- Cards -->
+        <div id="page-cards" class="page">
+            <div class="card admin-only">
+                <h3 id="label-add-creditor">ADD CREDITOR</h3>
+                <form id="card-form">
+                    <input type="text" id="card-name" placeholder="NAME" required>
+                    <input type="date" id="card-due" required>
+                    <input type="number" id="card-balance" placeholder="DMG" step="0.01">
+                    <button type="submit" id="btn-commit-card">COMMIT</button>
+                </form>
+            </div>
+            <div id="full-card-list"></div>
+        </div>
+
+        <!-- Stats -->
+        <div id="page-stats" class="page">
+            <div class="card"><h3 id="label-stats-trends">XP GAIN</h3><div style="height: 280px;"><canvas id="incomeChart"></canvas></div></div>
+            <div class="card"><h3 id="label-stats-split">DEBT SPREAD</h3><div style="height: 280px;"><canvas id="balanceChart"></canvas></div></div>
+        </div>
+
+        <!-- Admin -->
+        <div id="page-admin" class="page">
+            <div class="card" style="text-align: center;"><h3 id="label-share-access">CO-OP ACCESS</h3><div id="qr-container"></div><div id="admin-host-url" style="margin-top:10px; font-family:monospace; font-size:0.8em"></div></div>
+            
+            <div class="card admin-only">
+                <h3 id="label-user-mgmt">USER MANAGEMENT</h3>
+                <form id="user-form" style="margin-bottom: 20px;">
+                    <input type="text" id="new-user-name" placeholder="USERNAME" required>
+                    <input type="password" id="new-user-pass" placeholder="PASSWORD" required>
+                    <select id="new-user-role"><option value="user">VIEWER</option><option value="admin">ADMIN</option></select>
+                    <button type="submit" id="btn-create-player">CREATE PLAYER</button>
+                </form>
+                <div id="admin-user-list"></div>
+            </div>
+
+            <div class="card">
+                <h3 id="label-security">SECURITY</h3>
+                <form id="password-form">
+                    <input type="password" id="old-password" placeholder="OLD KEY" required>
+                    <input type="password" id="new-password" placeholder="NEW KEY" required>
+                    <button type="submit" id="btn-update-key" class="secondary">UPDATE KEY</button>
+                </form>
+                <button onclick="logout()" class="danger" id="btn-logout" style="margin-top:15px; width:100%">TERMINATE SESSION</button>
+            </div>
+
+            <div class="grid admin-only">
+                <div class="card"><h3>DATA</h3><div style="display:grid; gap:10px; grid-template-columns: 1fr 1fr;"><button onclick="exportDB()" class="secondary">SAVE</button><button onclick="document.getElementById('import-file').click()" class="secondary">LOAD</button><input type="file" id="import-file" style="display:none" onchange="importDB(this)"></div></div>
+                <div class="card"><h3>SYSTEM</h3><button onclick="testNotification()" class="secondary">PING</button></div>
+            </div>
+
+            <!-- Moved Debug Console here -->
+            <div class="card admin-only">
+                <h3 id="label-debug-title">DEBUG CONSOLE</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px">
+                    <button onclick="copyLogs()" class="secondary" id="btn-copy-debug">COPY ALL</button>
+                    <button onclick="clearAllLogs()" class="danger" id="btn-clear-debug">CLEAR ALL</button>
+                </div>
+                <div class="terminal" id="debug-terminal"></div>
+                <div class="pagination">
+                    <button onclick="changePage('alert', -1)" class="secondary"><i class="fas fa-chevron-left"></i></button>
+                    <span id="alert-page-label">P1</span>
+                    <button onclick="changePage('alert', 1)" class="secondary"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = ''; 
+        let token = localStorage.getItem('vanguard_token');
+        let userRole = localStorage.getItem('vanguard_role') || 'viewer';
+        let theme = localStorage.getItem('vanguard_theme') || 'modern';
+        let charts = { income: null, balance: null };
+        let pages = { payment: 0, alert: 0 };
+        let currentTab = 'dashboard';
+
+        const dict = {
+            retro: {
+                brand: 'WEALTHQUEST', hustleNav: 'QUEST', mainIncome: 'MAIN REVENUE', sideIncome: 'GRIND REWARD', bossBills: '<i class="fas fa-skull-crossbones"></i> BOSS BILLS',
+                recentLoot: '<i class="fas fa-scroll"></i> RECENT LOOT', hustleForm: 'LOG DATA', hustleJournal: 'MISSION LOG',
+                hustleAmount: 'CREDITS', btnSaveLoot: 'SAVE DATA', addCreditor: 'ADD CREDITOR', cardName: 'ENEMY NAME', cardBalance: 'DMG',
+                btnCommitCard: 'COMMIT', statsTrends: 'XP GAIN', statsSplit: 'DEBT SPREAD', adminShare: 'CO-OP ACCESS', adminUser: 'USER MANAGEMENT',
+                btnCreatePlayer: 'CREATE PLAYER', adminSecurity: 'SECURITY', oldKey: 'OLD KEY', newKey: 'NEW KEY', btnUpdateKey: 'UPDATE KEY',
+                btnLogout: '<i class="fas fa-skull"></i> TERMINATE SESSION', debugTitle: 'SYSTEM TERMINAL', btnCopyDebug: 'DUMP BUFFER',
+                btnClearDebug: 'PURGE MEM', authTitle: '<i class="fas fa-gamepad"></i> WEALTHQUEST', authMsg: 'INSERT CREDENTIALS', btnLogin: 'INITIALIZE',
+                catMain: 'MAIN MISSION', catSide: 'SIDE QUEST', labelTaxable: 'Taxable', icon: 'ghost'
+            },
+            modern: {
+                brand: 'WealthQuest Financial', hustleNav: 'Hustle', mainIncome: 'MAIN INCOME', sideIncome: 'SIDE INCOME', bossBills: '<i class="fas fa-bell"></i> UPCOMING BILLS',
+                recentLoot: '<i class="fas fa-history"></i> RECENT REVENUE', hustleForm: 'LOG REVENUE', hustleJournal: 'REVENUE JOURNAL',
+                hustleAmount: 'AMOUNT', btnSaveLoot: 'COMMIT RECORD', addCreditor: 'REGISTER CREDITOR', cardName: 'ENTITY NAME', cardBalance: 'BALANCE',
+                btnCommitCard: 'SAVE PORTFOLIO', statsTrends: 'MONTHLY TRENDS', statsSplit: 'BALANCE SPLIT', adminShare: 'SHARE ACCESS', adminUser: 'USER ACCOUNTS',
+                btnCreatePlayer: 'CREATE USER', adminSecurity: 'ACCOUNT SECURITY', oldKey: 'OLD PASSWORD', newKey: 'NEW PASSWORD', btnUpdateKey: 'CHANGE PASSWORD',
+                btnLogout: '<i class="fas fa-power-off"></i> SIGN OUT', debugTitle: 'SYSTEM DIAGNOSTICS', btnCopyDebug: 'COPY LOGS',
+                btnClearDebug: 'CLEAR ALL', authTitle: '<i class="fas fa-shield-halved"></i> WealthQuest', authMsg: 'PLEASE SIGN IN', btnLogin: 'SIGN IN',
+                catMain: 'MAIN INCOME', catSide: 'SIDE HUSTLE', labelTaxable: 'Taxable', icon: 'shield-halved'
+            },
+            pokemon: {
+                brand: 'POKÉQUEST', hustleNav: 'TRAIN', mainIncome: 'LEAGUE PRIZE', sideIncome: 'WILD LOOT', bossBills: '<i class="fas fa-burst"></i> GYM LEADERS',
+                recentLoot: '<i class="fas fa-bag-shopping"></i> RECENT CATCHES', hustleForm: 'LOG EXP GAIN', hustleJournal: 'TRAINER JOURNAL',
+                hustleAmount: 'POKÉDOLLARS', btnSaveLoot: 'SAVE TO PC', addCreditor: 'NEW RIVAL', cardName: 'TRAINER NAME', cardBalance: 'BATTLE DEBT',
+                btnCommitCard: 'ADD TO DEX', statsTrends: 'LEVEL GROWTH', statsSplit: 'TEAM BALANCE', adminShare: 'LINK CABLE', adminUser: 'TRAINER CLUB',
+                btnCreatePlayer: 'ADD TRAINER', adminSecurity: 'TRAINER ID', oldKey: 'OLD PASS', newKey: 'NEW PASS', btnUpdateKey: 'UPDATE ID',
+                btnLogout: '<i class="fas fa-door-open"></i> LEAVE CENTER', debugTitle: 'SYSTEM POKÉDEX', btnCopyDebug: 'EXPORT DATA',
+                btnClearDebug: 'RELEASE ALL', authTitle: '<i class="fas fa-circle-dot"></i> POKÉQUEST', authMsg: 'HELLO TRAINER!', btnLogin: 'GO!',
+                catMain: 'ELITE FOUR', catSide: 'WILD BATTLE', labelTaxable: 'Held Item', icon: 'circle-dot'
+            }
+        };
+
+        function applyTheme(t) {
+            document.body.setAttribute('data-theme', t);
+            const d = dict[t];
+            document.getElementById('brand-nav').innerHTML = `<i class="fas fa-${d.icon}"></i> ` + d.brand;
+            document.getElementById('nav-label-hustle').textContent = d.hustleNav;
+            document.getElementById('label-main-income').textContent = d.mainIncome;
+            document.getElementById('label-side-income').textContent = d.sideIncome;
+            document.getElementById('label-boss-bills').innerHTML = d.bossBills;
+            document.getElementById('label-recent-loot').innerHTML = d.recentLoot;
+            document.getElementById('hustle-form-title').textContent = d.hustleForm;
+            document.getElementById('label-mission-log').textContent = d.hustleJournal;
+            document.getElementById('pay-amount').placeholder = d.hustleAmount;
+            document.getElementById('btn-save-loot').textContent = d.btnSaveLoot;
+            document.getElementById('label-add-creditor').textContent = d.addCreditor;
+            document.getElementById('card-name').placeholder = d.cardName;
+            document.getElementById('card-balance').placeholder = d.cardBalance;
+            document.getElementById('btn-commit-card').textContent = d.btnCommitCard;
+            document.getElementById('label-stats-trends').textContent = d.statsTrends;
+            document.getElementById('label-stats-split').textContent = d.statsSplit;
+            document.getElementById('label-share-access').textContent = d.adminShare;
+            document.getElementById('label-user-mgmt').textContent = d.adminUser;
+            document.getElementById('btn-create-player').textContent = d.btnCreatePlayer;
+            document.getElementById('label-security').textContent = d.adminSecurity;
+            document.getElementById('btn-update-key').textContent = d.btnUpdateKey;
+            document.getElementById('btn-logout').innerHTML = d.btnLogout;
+            document.getElementById('label-debug-title').textContent = d.debugTitle;
+            document.getElementById('btn-copy-debug').textContent = d.btnCopyDebug;
+            document.getElementById('btn-clear-debug').textContent = d.btnClearDebug;
+            document.getElementById('auth-title').innerHTML = d.authTitle;
+            document.getElementById('auth-msg').textContent = d.authMsg;
+            document.getElementById('btn-login').textContent = d.btnLogin;
+            const cats = document.getElementById('pay-category');
+            cats.options[0].text = d.catSide;
+            cats.options[1].text = d.catMain;
+            document.getElementById('label-taxable-wrap').innerHTML = `<input type="checkbox" id="pay-taxable" style="width:auto"> ` + d.labelTaxable;
+            if (charts.income) updateDashboard(); 
+        }
+
+        function toggleTheme() { 
+            const themes = ['modern', 'retro', 'pokemon'];
+            theme = themes[(themes.indexOf(theme) + 1) % themes.length];
+            localStorage.setItem('vanguard_theme', theme); 
+            applyTheme(theme); 
+        }
+
+        async function api(path, options = {}) {
+            options.headers = options.headers || {};
+            if (token) options.headers['Authorization'] = `Bearer ${token}`;
+            if (options.body && !(options.body instanceof FormData)) options.headers['Content-Type'] = 'application/json';
+            const res = await fetch(`${API}/api/v1${path}`, options);
+            if (res.status === 401 && !path.includes('/auth/login')) { logout(); return; }
+            if (res.status === 204) return null;
+            return res.json();
+        }
+
+        function showPage(pageId) {
+            if (!token) return;
+            currentTab = pageId;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            document.querySelectorAll('.nav-item, .mobile-nav div').forEach(el => {
+                if(el.getAttribute('data-page') === pageId) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+            updateDashboard();
+        }
+
+        async function updateDashboard() {
+            if (!token) return;
+            document.body.setAttribute('data-role', userRole);
+            try {
+                const [cash, cards, hostInfo] = await Promise.all([api('/side-hustle/net-cash'), api('/cards'), api('/admin/host-info')]);
+                if (hostInfo) {
+                    document.getElementById('admin-host-url').textContent = hostInfo.url;
+                    const qrc = document.getElementById("qr-container");
+                    if (qrc) { qrc.innerHTML = ''; new QRCode(qrc, { text: hostInfo.url, width: 180, height: 180, colorDark: theme==='retro'?'#ff00ff':(theme==='pokemon'?'#3b4cca':'#1a2a3a') }); }
+                }
+                if (currentTab === 'dashboard') {
+                    document.getElementById('dash-main-income').textContent = `$${cash.main_income.toFixed(2)}`;
+                    document.getElementById('dash-side-hustle').textContent = `$${cash.side_hustle.toFixed(2)}`;
+                    document.getElementById('dash-card-summary').innerHTML = cards.slice(0,5).map(c => `<div class="list-item"><span>${c.name}</span><span class="badge ${c.days_remaining <= c.alert_threshold ? 'badge-urgent' : 'badge-success'}">${c.days_remaining}D</span></div>`).join('');
+                    const recent = await api('/side-hustle/payments?limit=5');
+                    document.getElementById('dash-recent-payments').innerHTML = recent.map(p => `<div class="list-item"><span>${p.source || (theme==='retro'?'LOOT':'INCOME')}</span><strong>$${p.amount.toFixed(2)}</strong></div>`).join('');
+                }
+                if (currentTab === 'side-hustle') {
+                    const payments = await api(`/side-hustle/payments?limit=8&offset=${pages.payment * 8}`);
+                    document.getElementById('payment-list').innerHTML = payments.map(p => `<div class="list-item"><div><strong>${p.source || (theme==='retro'?'LOOT':'INCOME')}</strong> [${p.category.toUpperCase()}]<br><small>${p.date}</small></div><strong>$${p.amount.toFixed(2)}</strong></div>`).join('');
+                    document.getElementById('payment-page-label').textContent = `P${pages.payment + 1}`;
+                }
+                if (currentTab === 'cards') {
+                    document.getElementById('full-card-list').innerHTML = cards.map(c => `<div class="card"><div style="display:flex; justify-content:space-between"><div><h3 style="margin:0">${c.name}</h3><small>DUE: ${c.due_date}</small></div><div class="stat-value" style="font-size:1.2em">$${c.balance.toFixed(2)}</div></div><div class="list-item" style="border:none; padding-bottom:0"><span>${c.days_remaining} DAYS</span>${userRole==='admin'?`<button class="delete-btn" onclick="deleteCard(${c.id})"><i class="fas fa-trash"></i></button>`:''}</div></div>`).join('');
+                }
+                if (currentTab === 'stats') renderCharts(cards);
+                if (currentTab === 'admin' && userRole === 'admin') {
+                    const [history, users] = await Promise.all([api(`/alerts/history?limit=10&offset=${pages.alert * 10}`), api('/auth/users')]);
+                    document.getElementById('debug-terminal').innerHTML = history.map(h => `<div class="terminal-line"><div>> [${h.timestamp.split('.')[0]}] ${h.type.toUpperCase()}: ${h.status.toUpperCase()}</div><button class="delete-btn" style="border-width:1px; height:20px; padding:0 5px" onclick="deleteLog(${h.id})">X</button></div>`).join('') || '> NO LOG DATA';
+                    document.getElementById('admin-user-list').innerHTML = users.map(u => `<div class="list-item"><span>${u.username}</span><span class="badge">${u.role}</span></div>`).join('');
+                    document.getElementById('alert-page-label').textContent = `P${pages.alert + 1}`;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function renderCharts(cards) {
+            const trend = await api('/side-hustle/stats/monthly-trends');
+            const colors = theme === 'retro' ? ['#ff00ff', '#00ffff'] : (theme === 'pokemon' ? ['#3b4cca', '#ffcb05'] : ['#3498db', '#e74c3c']);
+            if (charts.income) charts.income.destroy();
+            charts.income = new Chart(document.getElementById('incomeChart'), { type: 'bar', data: { labels: trend.map(t => t.month), datasets: [{ data: trend.map(t => t.total), backgroundColor: colors[0] }] }, options: { responsive: true, maintainAspectRatio: false } });
+            if (charts.balance) charts.balance.destroy();
+            charts.balance = new Chart(document.getElementById('balanceChart'), { type: 'doughnut', data: { labels: cards.map(c => c.name), datasets: [{ data: cards.map(c => c.balance), backgroundColor: colors.concat(['#39ff14', '#ffff00', '#ef5350']) }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%' } });
+        }
+
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('username', document.getElementById('username').value);
+            formData.append('password', document.getElementById('password').value);
+            const res = await fetch(`${API}/api/v1/auth/login`, { method: 'POST', body: formData });
+            if (res.ok) {
+                const data = await res.json(); token = data.access_token; localStorage.setItem('vanguard_token', token);
+                try { const payload = JSON.parse(atob(token.split('.')[1])); userRole = payload.role || 'viewer'; localStorage.setItem('vanguard_role', userRole); } catch(e) { userRole = 'viewer'; }
+                document.getElementById('auth-screen').style.display = 'none'; showPage('dashboard');
+            } else if (res.status === 401) {
+                const regRes = await fetch(`${API}/api/v1/auth/register`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value}) });
+                if (regRes.ok) alert('INITIALIZED. SIGN IN NOW.');
+            }
+        };
+
+        function logout() { token = null; localStorage.removeItem('vanguard_token'); localStorage.removeItem('vanguard_role'); location.reload(); }
+        function changePage(type, delta) { pages[type] = Math.max(0, pages[type] + delta); updateDashboard(); }
+        async function deleteCard(id) { if (confirm('PURGE?')) { await api(`/cards/${id}`, { method: 'DELETE' }); updateDashboard(); } }
+        async function deleteLog(id) { await api(`/alerts/${id}`, { method: 'DELETE' }); updateDashboard(); }
+        async function clearAllLogs() { if (confirm('PURGE ALL?')) { await api('/alerts', { method: 'DELETE' }); updateDashboard(); } }
+        function copyLogs() { navigator.clipboard.writeText(document.getElementById('debug-terminal').innerText); alert('COPIED'); }
+        async function exportDB() { const d = await api('/admin/export'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'})); a.download='wealthquest.json'; a.click(); }
+        async function importDB(input) { if (!input.files[0]) return; const formData = new FormData(); formData.append('file', input.files[0]); const res = await api('/admin/import', { method: 'POST', body: formData }); if (res) { alert('LOAD COMPLETE'); updateDashboard(); } }
+        async function testNotification() { await api('/alerts/test', { method: 'POST' }); }
+
+        document.getElementById('user-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await api('/auth/register', { method: 'POST', body: JSON.stringify({ username: document.getElementById('new-user-name').value, password: document.getElementById('new-user-pass').value, role: document.getElementById('new-user-role').value }) });
+            if (res) { alert('PLAYER ADDED'); e.target.reset(); updateDashboard(); }
+        };
+
+        document.getElementById('password-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await api(`/auth/change-password?old_password=${document.getElementById('old-password').value}&new_password=${document.getElementById('new-password').value}`, { method: 'POST' });
+            if (res) { alert('KEY UPDATED'); e.target.reset(); }
+        };
+
+        document.getElementById('payment-form').onsubmit = async (e) => {
+            e.preventDefault();
+            await api('/side-hustle/payments', { method: 'POST', body: JSON.stringify({ amount: parseFloat(document.getElementById('pay-amount').value), source: document.getElementById('pay-source').value, date: document.getElementById('pay-date').value, category: document.getElementById('pay-category').value, tax_flag: document.getElementById('pay-taxable').checked ? 1 : 0 }) });
+            e.target.reset(); setDefaultDates(); showPage('dashboard');
+        };
+
+        document.getElementById('card-form').onsubmit = async (e) => {
+            e.preventDefault();
+            await api('/cards', { method: 'POST', body: JSON.stringify({ name: document.getElementById('card-name').value, due_date: document.getElementById('card-due').value, balance: parseFloat(document.getElementById('card-balance').value) || 0 }) });
+            e.target.reset(); setDefaultDates(); showPage('dashboard');
+        };
+
+        function setDefaultDates() { const d = new Date().toISOString().split('T')[0]; document.querySelectorAll('input[type="date"]').forEach(i => i.value = d); }
+
+        applyTheme(theme);
+        if (token) { document.getElementById('auth-screen').style.display = 'none'; showPage('dashboard'); }
+    </script>
+</body>
+</html>
