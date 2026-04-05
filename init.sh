@@ -36,9 +36,11 @@ chmod +x start.sh stop.sh
 
 # 5. Initialize Database
 echo "💾 Initializing database tables..."
-python3 -c "from src.models.database import create_tables; create_tables(); print('✅ Database tables initialized.')"
-
-echo ""
-echo "✨ Initialization Complete!"
+export PYTHONPATH=$PYTHONPATH:.
+if python3 -c "from src.models.database import create_tables; create_tables(); print('✅ Database tables initialized.')"; then
+    echo "✨ Initialization Complete!"
+else
+    echo "❌ Database initialization failed. Ensure dependencies are correctly installed."
+fi
 echo "🚀 You can now start the quest with: ./start.sh"
 echo "📱 Use the 'Connect' section in the Admin tab to view on other devices."
