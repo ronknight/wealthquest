@@ -12,10 +12,23 @@ pkg upgrade -y
 echo "🛠️ Installing system dependencies (Python, SQLite, Termux-API)..."
 pkg install -y python sqlite termux-api pkg-config libffi openssl rust
 
+# 2.1 Set Android API Level (Required for Rust/Maturin packages like pydantic-core)
+API_LEVEL=$(getprop ro.build.version.sdk)
+if [ -n "$API_LEVEL" ]; then
+    echo "📱 Detected Android API Level: $API_LEVEL"
+    export ANDROID_API_LEVEL=$API_LEVEL
+else
+    echo "⚠️ Could not detect Android API level. Defaulting to 24 (Termux standard)."
+    export ANDROID_API_LEVEL=24
+fi
+
 # 3. Install Python packages
 echo "🐍 Installing Python dependencies from requirements.txt..."
 pip install --upgrade pip
-pip install -r requirements.txt
+if ! pip install -r requirements.txt; then
+    echo "❌ Standard install failed. Retrying with --no-build-isolation if possible..."
+    pip install -r requirements.txt --no-build-isolation
+fi
 
 # 4. Ensure scripts are executable
 echo "📜 Setting permissions for start/stop scripts..."
