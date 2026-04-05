@@ -25,7 +25,7 @@ venv/
 Thumbs.db
 
 # Termux / Project specific
-init.sh
-start.sh
-stop.sh
+# init.sh
+# start.sh
+# stop.sh
 # Keep scripts but ignore local env changes if any

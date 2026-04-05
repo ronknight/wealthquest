@@ -62,3 +62,16 @@
 - [x] 7.4 Performance test: Dashboard loads within 2 seconds on LAN
 - [x] 7.5 Error handling test: Graceful degradation when termux-api is unavailable
 - [x] 7.6 Security test: Verify no external network exposure beyond LAN
+
+## 8. WealthQuest Enhancements
+
+- [x] 8.1 Implement JWT-based authentication system with Login/Logout
+- [x] 8.2 Add Role-Based Access Control (Admin vs Viewer roles)
+- [x] 8.3 Implement multi-template UI engine (Modern, Retro, Trainer themes)
+- [x] 8.4 Add Recurring Transaction support ("Plan" module)
+- [x] 8.5 Implement JSON database Export and Import functionality
+- [x] 8.6 Integrate QR Code generator for LAN access sharing
+- [x] 8.7 Create terminal-style Debug Console for log management
+- [x] 8.8 Implement full CRUD (editing) for all transaction entries
+- [x] 8.9 Enhance data model with `notes` and `category` (Main vs Side) support
+- [x] 8.10 Initialize public Git repository with `.gitignore` and deployment scripts
