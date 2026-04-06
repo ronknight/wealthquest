@@ -45,6 +45,16 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
         return FileResponse("static/index.html")
     return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    # Log the exception for debugging
+    import logging
+    logging.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
 # Configure CORS for LAN access
 app.add_middleware(
     CORSMiddleware,
