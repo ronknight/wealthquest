@@ -24,7 +24,6 @@ fi
 
 # 3. Install Python packages
 echo "🐍 Installing Python dependencies from requirements.txt..."
-pip install --upgrade pip
 if ! pip install -r requirements.txt; then
     echo "❌ Standard install failed. Retrying with --no-build-isolation if possible..."
     pip install -r requirements.txt --no-build-isolation
