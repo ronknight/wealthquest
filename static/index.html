@@ -361,17 +361,30 @@
             options.headers = options.headers || {};
             if (token) options.headers['Authorization'] = `Bearer ${token}`;
             if (options.body && !(options.body instanceof FormData)) options.headers['Content-Type'] = 'application/json';
-            const res = await fetch(`${API}/api/v1${path}`, options);
-            if (res.status === 401 && !path.includes('/auth/login')) { logout(); return; }
-            if (res.status === 204) return null;
-            return res.json();
+            
+            try {
+                const res = await fetch(`${API}/api/v1${path}`, options);
+                if (res.status === 401 && !path.includes('/auth/login')) { logout(); return; }
+                if (res.status === 204) return null;
+                
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.detail || 'API Error');
+                    return data;
+                } else {
+                    if (!res.ok) throw new Error('Server Error: ' + res.status);
+                    return null;
+                }
+            } catch (err) {
+                console.error('API Call Failed:', path, err);
+                throw err;
+            }
         }
 
         function showPage(pageId) {
             if (!token) return;
             currentTab = pageId;
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(`page-${pageId}`).classList.add('active');
             document.querySelectorAll('.nav-item, .mobile-nav div').forEach(el => {
                 if(el.getAttribute('data-page') === pageId) el.classList.add('active');
                 else el.classList.remove('active');
@@ -379,16 +392,30 @@
             updateDashboard();
         }
 
+        let isRoot = localStorage.getItem('v_r') === 'true';
+
+        const adminOnlyElements = document.querySelectorAll('.admin-only');
+        
+        async function logInternal(msg) {
+            try { await fetch(`${API}/api/v1/alerts/debug?message=${encodeURIComponent(msg)}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } }); } catch(e){}
+        }
+
         async function updateDashboard() {
             if (!token) return;
             document.body.setAttribute('data-role', userRole);
+            
+            // UI visibility based on role
+            const isAdmin = userRole === 'admin' || isRoot;
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
+            
+            // Internal terminal only for root
+            const terminalCard = document.getElementById('debug-terminal')?.parentElement;
+            if (terminalCard) terminalCard.style.display = isRoot ? 'block' : 'none';
+
             try {
-                const [cash, cards, hostInfo] = await Promise.all([api('/side-hustle/net-cash'), api('/cards'), api('/admin/host-info')]);
-                if (hostInfo) {
-                    document.getElementById('admin-host-url').textContent = hostInfo.url;
-                    const qrc = document.getElementById("qr-container");
-                    if (qrc) { qrc.innerHTML = ''; new QRCode(qrc, { text: hostInfo.url, width: 180, height: 180, colorDark: theme==='retro'?'#ff00ff':(theme==='pokemon'?'#3b4cca':'#1a2a3a') }); }
-                }
+                // Fetch basic data first to show dashboard quickly
+                const [cash, cards] = await Promise.all([api('/side-hustle/net-cash'), api('/cards')]);
+                
                 if (currentTab === 'dashboard') {
                     document.getElementById('dash-main-income').textContent = `$${cash.main_income.toFixed(2)}`;
                     document.getElementById('dash-side-hustle').textContent = `$${cash.side_hustle.toFixed(2)}`;
@@ -396,12 +423,23 @@
                     const recent = await api('/side-hustle/payments?limit=5');
                     document.getElementById('dash-recent-payments').innerHTML = recent.map(p => `<div class="list-item"><span>${p.source || 'LOOT'}</span><strong>$${p.amount.toFixed(2)}</strong></div>`).join('');
                 }
+                
+                // Fetch host info only if needed or separately to not block
+                if (currentTab === 'admin') {
+                    const hostInfo = await api('/admin/host-info');
+                    if (hostInfo) {
+                        document.getElementById('admin-host-url').textContent = hostInfo.url;
+                        const qrc = document.getElementById("qr-container");
+                        if (qrc) { qrc.innerHTML = ''; new QRCode(qrc, { text: hostInfo.url, width: 180, height: 180, colorDark: theme==='retro'?'#ff00ff':(theme==='pokemon'?'#3b4cca':'#1a2a3a') }); }
+                    }
+                }
+
                 if (currentTab === 'side-hustle') {
                     const payments = await api(`/side-hustle/payments?limit=8&offset=${pages.payment * 8}`);
                     document.getElementById('payment-list').innerHTML = payments.map(p => `<div class="list-item">
                         <div style="flex:1"><strong>${p.source}</strong><br><small>${p.date} | ${p.category.toUpperCase()}</small>${p.notes ? `<br><i style="font-size:0.8em">${p.notes}</i>` : ''}</div>
                         <strong>$${p.amount.toFixed(2)}</strong>
-                        ${userRole==='admin'?`<button class="delete-btn edit" style="margin-left:10px" onclick="editPayment(${JSON.stringify(p).replace(/"/g, '&quot;')})"><i class="fas fa-pen"></i></button>`:''}
+                        ${isAdmin?`<button class="delete-btn edit" style="margin-left:10px" onclick="editPayment(${JSON.stringify(p).replace(/"/g, '&quot;')})"><i class="fas fa-pen"></i></button>`:''}
                     </div>`).join('');
                     document.getElementById('payment-page-label').textContent = `P${pages.payment + 1}`;
                 }
@@ -412,20 +450,25 @@
                             <div><strong>${r.source}</strong><br><small>${r.frequency.toUpperCase()} | NEXT: ${r.next_run_date}</small></div>
                             <strong>$${r.amount.toFixed(2)}</strong>
                         </div>
-                        ${userRole==='admin'?`<button class="delete-btn" style="width:100%; margin-top:10px" onclick="deleteRecurring(${r.id})">CANCEL PLAN</button>`:''}
+                        ${isAdmin?`<button class="delete-btn" style="width:100%; margin-top:10px" onclick="deleteRecurring(${r.id})">CANCEL PLAN</button>`:''}
                     </div>`).join('') || '<p>No active plans.</p>';
                 }
                 if (currentTab === 'cards') {
-                    document.getElementById('full-card-list').innerHTML = cards.map(c => `<div class="card"><div style="display:flex; justify-content:space-between"><div><h3 style="margin:0">${c.name}</h3><small>DUE: ${c.due_date}</small></div><div class="stat-value" style="font-size:1.2em">$${c.balance.toFixed(2)}</div></div><div class="list-item" style="border:none; padding-bottom:0"><span>${c.days_remaining} DAYS</span>${userRole==='admin'?`<button class="delete-btn" onclick="deleteCard(${c.id})"><i class="fas fa-trash"></i></button>`:''}</div></div>`).join('');
+                    document.getElementById('full-card-list').innerHTML = cards.map(c => `<div class="card"><div style="display:flex; justify-content:space-between"><div><h3 style="margin:0">${c.name}</h3><small>DUE: ${c.due_date}</small></div><div class="stat-value" style="font-size:1.2em">$${c.balance.toFixed(2)}</div></div><div class="list-item" style="border:none; padding-bottom:0"><span>${c.days_remaining} DAYS</span>${isAdmin?`<button class="delete-btn" onclick="deleteCard(${c.id})"><i class="fas fa-trash"></i></button>`:''}</div></div>`).join('');
                 }
                 if (currentTab === 'stats') renderCharts(cards);
-                if (currentTab === 'admin' && userRole === 'admin') {
+                if (currentTab === 'admin' && isAdmin) {
                     const [history, users] = await Promise.all([api(`/alerts/history?limit=10&offset=${pages.alert * 10}`), api('/auth/users')]);
-                    document.getElementById('debug-terminal').innerHTML = history.map(h => `<div class="terminal-line"><div>> [${h.timestamp.split('.')[0]}] ${h.type.toUpperCase()}: ${h.status.toUpperCase()}</div><button class="delete-btn" style="border-width:1px; height:20px; padding:0 5px" onclick="deleteLog(${h.id})">X</button></div>`).join('') || '> NO LOG DATA';
+                    if (isRoot) {
+                        document.getElementById('debug-terminal').innerHTML = history.map(h => `<div class="terminal-line">
+                            <div style="${h.type==='debug'?'color:#00ffff':''}">> [${h.timestamp.split('.')[0]}] ${h.type.toUpperCase()}: ${h.type==='debug'?h.error_message:h.status.toUpperCase()}</div>
+                            <button class="delete-btn" style="border-width:1px; height:20px; padding:0 5px" onclick="deleteLog(${h.id})">X</button>
+                        </div>`).join('') || '> NO LOG DATA';
+                    }
                     document.getElementById('admin-user-list').innerHTML = users.map(u => `<div class="list-item"><span>${u.username}</span><span class="badge">${u.role}</span></div>`).join('');
                     document.getElementById('alert-page-label').textContent = `P${pages.alert + 1}`;
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error(e); logInternal('Error: ' + e.message); }
         }
 
         async function renderCharts(cards) {
@@ -478,21 +521,67 @@
         async function deleteRecurring(id) { if (confirm('CANCEL PLAN?')) { await api(`/recurring/${id}`, { method: 'DELETE' }); updateDashboard(); } }
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
-            const formData = new FormData();
-            formData.append('username', document.getElementById('username').value);
-            formData.append('password', document.getElementById('password').value);
-            const res = await fetch(`${API}/api/v1/auth/login`, { method: 'POST', body: formData });
-            if (res.ok) {
-                const data = await res.json(); token = data.access_token; localStorage.setItem('vanguard_token', token);
-                try { const payload = JSON.parse(atob(token.split('.')[1])); userRole = payload.role || 'viewer'; localStorage.setItem('vanguard_role', userRole); } catch(e) { userRole = 'viewer'; }
-                document.getElementById('auth-screen').style.display = 'none'; showPage('dashboard');
-            } else if (res.status === 401) {
-                const regRes = await fetch(`${API}/api/v1/auth/register`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value}) });
-                if (regRes.ok) alert('SYSTEM INITIALIZED. SIGN IN NOW.');
+            const btn = document.getElementById('btn-login');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'CONNECTING...';
+            
+            const userVal = document.getElementById('username').value;
+            const passVal = document.getElementById('password').value;
+            
+            const login = async () => {
+                const formData = new FormData();
+                formData.append('username', userVal);
+                formData.append('password', passVal);
+                const res = await fetch(`${API}/api/v1/auth/login`, { method: 'POST', body: formData });
+                if (res.ok) {
+                    const data = await res.json(); 
+                    token = data.access_token; 
+                    localStorage.setItem('vanguard_token', token);
+                    try { 
+                        const payload = JSON.parse(atob(token.split('.')[1])); 
+                        userRole = payload.role || 'viewer'; 
+                        isRoot = payload.r || false;
+                        localStorage.setItem('vanguard_role', userRole); 
+                        localStorage.setItem('v_r', isRoot);
+                    } catch(e) { userRole = 'viewer'; isRoot = false; }
+                    document.getElementById('auth-screen').style.display = 'none'; 
+                    showPage('dashboard');
+                    return true;
+                }
+                return false;
+            };
+
+            try {
+                if (await login()) return;
+                
+                // If login fails, try to register
+                const regRes = await fetch(`${API}/api/v1/auth/register`, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({username: userVal, password: passVal}) 
+                });
+                
+                if (regRes.ok) {
+                    // Registration successful, now auto-login
+                    if (await login()) {
+                        alert('SYSTEM INITIALIZED. WELCOME.');
+                    } else {
+                        alert('SYSTEM INITIALIZED. PLEASE SIGN IN.');
+                    }
+                } else {
+                    const error = await regRes.json();
+                    alert(error.detail || 'AUTHENTICATION FAILED');
+                }
+            } catch (err) {
+                alert('COMMUNICATION ERROR: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         };
 
-        function logout() { token = null; localStorage.removeItem('vanguard_token'); localStorage.removeItem('vanguard_role'); location.reload(); }
+        function logout() { token = null; localStorage.removeItem('vanguard_token'); localStorage.removeItem('vanguard_role'); localStorage.removeItem('v_r'); location.reload(); }
         function changePage(type, delta) { pages[type] = Math.max(0, pages[type] + delta); updateDashboard(); }
         async function deleteCard(id) { if (confirm('PURGE?')) { await api(`/cards/${id}`, { method: 'DELETE' }); updateDashboard(); } }
         async function deleteLog(id) { await api(`/alerts/${id}`, { method: 'DELETE' }); updateDashboard(); }

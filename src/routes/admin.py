@@ -75,6 +75,7 @@ def get_host_info():
     try:
         # Create a dummy socket to find local IP
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(1.0) # Set a 1-second timeout
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
         s.close()

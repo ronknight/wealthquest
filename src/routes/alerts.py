@@ -23,13 +23,37 @@ def get_alert_history(
     card_id: Optional[int] = Query(None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    current_user: database.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db)
 ):
     """Retrieve notification log history with pagination."""
     query = db.query(database.Alert)
+    
+    # Internal filter
+    if not auth.is_root(current_user):
+        query = query.filter(database.Alert.type != "debug")
+        
     if card_id:
         query = query.filter(database.Alert.card_id == card_id)
     return query.order_by(database.Alert.timestamp.desc()).offset(offset).limit(limit).all()
+
+@router.post("/debug")
+def log_debug_info(
+    message: str = Query(...),
+    current_user: database.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """Add a debug log entry. Accessible to all logged-in users to help trace issues."""
+    from datetime import datetime
+    new_debug = database.Alert(
+        timestamp=datetime.now().isoformat(),
+        type="debug",
+        status="info",
+        error_message=message
+    )
+    db.add(new_debug)
+    db.commit()
+    return {"status": "logged"}
 
 @router.delete("/{id}", status_code=204)
 def delete_alert(id: int, db: Session = Depends(database.get_db)):

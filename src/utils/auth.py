@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -8,9 +9,12 @@ from sqlalchemy.orm import Session
 from ..models import database, schemas
 
 # SECURITY WARNING: Keep this secret in production!
-SECRET_KEY = "vanguard-secret-key-change-me"
+SECRET_KEY = os.environ.get("VANGUARD_SECRET", "vanguard-secret-key-change-me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 24 hours
+
+# Root Access Control
+ROOT_USER = os.environ.get("VANGUARD_ROOT", "vroot")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
@@ -20,6 +24,10 @@ def verify_password(plain_password, hashed_password):
 
 def get_password_hash(password):
     return pwd_context.hash(password)
+
+def is_root(user: database.User):
+    """Internal check for elevated access."""
+    return user.username == ROOT_USER
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -53,18 +61,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 
 def require_role(role: str):
     def role_checker(current_user: database.User = Depends(get_current_user)):
-        if current_user.role != role and current_user.role != "admin":
+        if current_user.role != role and not is_root(current_user):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Operation not permitted for your role"
+                detail="Operation not permitted"
             )
         return current_user
     return role_checker
 
 def require_admin(current_user: database.User = Depends(get_current_user)):
-    if current_user.role != "admin":
+    if current_user.role != "admin" and not is_root(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            detail="Unauthorized"
+        )
+    return current_user
+
+def require_root(current_user: database.User = Depends(get_current_user)):
+    if not is_root(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden"
         )
     return current_user
