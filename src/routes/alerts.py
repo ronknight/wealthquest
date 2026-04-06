@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..models import database, schemas
 from ..services import notifications
+from ..utils import auth
 
 router = APIRouter(
     prefix="/api/v1/alerts",
