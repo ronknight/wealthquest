@@ -26,17 +26,27 @@ if not hasattr(bcrypt, "__about__"):
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
-def verify_password(plain_password, hashed_password):
-    # Bcrypt has a 72-byte limit. We truncate to ensure compatibility.
-    if isinstance(plain_password, str):
-        plain_password = plain_password[:72]
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str):
+    # Truncate to 72 bytes to match bcrypt limit
+    plain_bytes = plain_password[:72].encode('utf-8')
+    # passlib stores hashes in a format bcrypt expects
+    hashed_bytes = hashed_password.encode('utf-8')
+    try:
+        return bcrypt.checkpw(plain_bytes, hashed_bytes)
+    except Exception:
+        # Fallback to passlib if format is different (unlikely)
+        try:
+            return pwd_context.verify(plain_password[:72], hashed_password)
+        except Exception:
+            return False
 
-def get_password_hash(password):
-    # Bcrypt has a 72-byte limit. We truncate to ensure compatibility.
-    if isinstance(password, str):
-        password = password[:72]
-    return pwd_context.hash(password)
+def get_password_hash(password: str):
+    # Truncate to 72 bytes to match bcrypt limit
+    plain_bytes = password[:72].encode('utf-8')
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(plain_bytes, salt)
+    return hashed.decode('utf-8')
 
 def is_root(user: database.User):
     """Internal check for elevated access."""
