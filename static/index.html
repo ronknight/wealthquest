@@ -101,6 +101,7 @@
         
         form { display: flex; flex-direction: column; gap: 16px; }
         input, select, button, textarea { padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; width: 100%; font-family: var(--font-main); background: var(--white); color: var(--text); font-weight: 700; }
+        input::placeholder, textarea::placeholder { font-weight: 400; font-size: 0.85em; opacity: 0.7; text-overflow: ellipsis; }
         textarea { resize: vertical; min-height: 80px; }
         button { background: var(--accent); color: var(--primary); border: none; cursor: pointer; text-transform: uppercase; font-family: var(--font-heading); font-size: 0.6em; transition: 0.2s; }
         button:hover { filter: brightness(1.1); }
@@ -293,7 +294,7 @@
                 btnLogout: '<i class="fas fa-skull"></i> TERMINATE SESSION', debugTitle: 'SYSTEM TERMINAL', btnCopyDebug: 'DUMP BUFFER',
                 btnClearDebug: 'PURGE MEM', authTitle: '<i class="fas fa-gamepad"></i> WEALTHQUEST', authMsg: 'INSERT CREDENTIALS', btnLogin: 'INITIALIZE',
                 catMain: 'MAIN MISSION', catSide: 'SIDE QUEST', labelTaxable: 'Taxable', icon: 'ghost', recTitle: 'AUTOMATION PLAN', btnSaveRec: 'ACTIVATE PLAN', adminAudit: 'AUDIT TRAIL',
-                userPh: 'USER ID', passPh: 'PASS-KEY', lootSourcePh: 'ORIGIN POINT', lootNotesPh: 'MISSION INTEL...', recSourcePh: 'PLAN NAME', recNotesPh: 'AUTOMATION INTEL...', cardNamePh: 'TARGET NAME', cardBalancePh: 'DEBT HP', newUserPh: 'PLAYER NAME', newPassPh: 'SECRET CODE', oldKeyPh: 'CURRENT KEY', newKeyPh: 'NEW SECRET'
+                userPh: 'USER ID', passPh: 'PASS-KEY', lootSourcePh: 'SOURCE', lootNotesPh: 'MISSION INTEL', recSourcePh: 'PLAN NAME', recNotesPh: 'PLAN INTEL', cardNamePh: 'NAME', cardBalancePh: 'DEBT HP', newUserPh: 'USERNAME', newPassPh: 'PASS-KEY', oldKeyPh: 'OLD KEY', newKeyPh: 'NEW KEY'
             },
             modern: {
                 brand: 'WealthQuest Financial', hustleNav: 'Hustle', recNav: 'Recurring', mainIncome: 'MAIN INCOME', sideIncome: 'SIDE INCOME', bossBills: '<i class="fas fa-bell"></i> UPCOMING BILLS',
@@ -304,7 +305,7 @@
                 btnLogout: '<i class="fas fa-power-off"></i> SIGN OUT', debugTitle: 'SYSTEM DIAGNOSTICS', btnCopyDebug: 'COPY LOGS',
                 btnClearDebug: 'CLEAR ALL', authTitle: '<i class="fas fa-shield-halved"></i> WealthQuest', authMsg: 'PLEASE SIGN IN', btnLogin: 'SIGN IN',
                 catMain: 'MAIN INCOME', catSide: 'SIDE HUSTLE', labelTaxable: 'Taxable', icon: 'shield-halved', recTitle: 'RECURRING ENTRIES', btnSaveRec: 'SAVE PATTERN', adminAudit: 'SYSTEM LOGS',
-                userPh: 'Username', passPh: 'Password', lootSourcePh: 'Where did this come from?', lootNotesPh: 'Additional details or context...', recSourcePh: 'Pattern name (e.g. Salary)', recNotesPh: 'Notes for this plan...', cardNamePh: 'Credit card name', cardBalancePh: 'Current statement balance', newUserPh: 'Full name or username', newPassPh: 'Set a strong password', oldKeyPh: 'Enter current password', newKeyPh: 'Enter new password'
+                userPh: 'Username', passPh: 'Password', lootSourcePh: 'Source (e.g. Sales)', lootNotesPh: 'Mission details...', recSourcePh: 'Pattern (e.g. Salary)', recNotesPh: 'Automation notes...', cardNamePh: 'Card name', cardBalancePh: 'Current balance', newUserPh: 'Username', newPassPh: 'Strong password', oldKeyPh: 'Current password', newKeyPh: 'New password'
             },
             pokemon: {
                 brand: 'POKÉQUEST', hustleNav: 'TRAIN', recNav: 'TIMER', mainIncome: 'LEAGUE PRIZE', sideIncome: 'WILD LOOT', bossBills: '<i class="fas fa-burst"></i> GYM LEADERS',
@@ -315,7 +316,7 @@
                 btnLogout: '<i class="fas fa-door-open"></i> LEAVE CENTER', debugTitle: 'SYSTEM POKÉDEX', btnCopyDebug: 'EXPORT DATA',
                 btnClearDebug: 'RELEASE ALL', authTitle: '<i class="fas fa-circle-dot"></i> POKÉQUEST', authMsg: 'HELLO TRAINER!', btnLogin: 'GO!',
                 catMain: 'ELITE FOUR', catSide: 'WILD BATTLE', labelTaxable: 'Held Item', icon: 'circle-dot', recTitle: 'DAY CARE SCHEDULE', btnSaveRec: 'DEPOSIT PLAN', adminAudit: 'JOURNAL HISTORY',
-                userPh: 'TRAINER NAME', passPh: 'BADGE CODE', lootSourcePh: 'WHERE CAUGHT?', lootNotesPh: 'BATTLE NOTES...', recSourcePh: 'EXP PATTERN', recNotesPh: 'DAY CARE NOTES...', cardNamePh: 'RIVAL NAME', cardBalancePh: 'COIN DEBT', newUserPh: 'NEW TRAINER', newPassPh: 'SECURITY CODE', oldKeyPh: 'OLD BADGE CODE', newKeyPh: 'NEW BADGE CODE'
+                userPh: 'TRAINER NAME', passPh: 'BADGE CODE', lootSourcePh: 'WHERE CAUGHT?', lootNotesPh: 'BATTLE INTEL...', recSourcePh: 'EXP PATTERN', recNotesPh: 'DAY CARE INTEL...', cardNamePh: 'RIVAL NAME', cardBalancePh: 'COIN DEBT', newUserPh: 'NEW TRAINER', newPassPh: 'SECRET CODE', oldKeyPh: 'OLD BADGE', newKeyPh: 'NEW BADGE'
             }
         };
 
@@ -527,10 +528,63 @@
             const trend = await api('/side-hustle/stats/monthly-trends') || [];
             const isRetro = theme === 'retro';
             const colors = theme === 'retro' ? ['#ff00ff', '#00ffff'] : (theme === 'pokemon' ? ['#3b4cca', '#ffcb05'] : ['#3498db', '#e74c3c']);
+            
+            // Get current text color from CSS variable
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#333';
+            const fontMain = getComputedStyle(document.documentElement).getPropertyValue('--font-main').trim() || 'sans-serif';
+
             if (charts.income) charts.income.destroy();
-            charts.income = new Chart(document.getElementById('incomeChart'), { type: 'bar', data: { labels: trend.map(t => t.month || '???'), datasets: [{ data: trend.map(t => t.total || 0), backgroundColor: colors[0], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+            charts.income = new Chart(document.getElementById('incomeChart'), { 
+                type: 'bar', 
+                data: { 
+                    labels: trend.length ? trend.map(t => t.month || 'UNKNOWN') : ['NO DATA'], 
+                    datasets: [{ 
+                        label: 'MONTHLY REVENUE',
+                        data: trend.length ? trend.map(t => t.total || 0) : [0], 
+                        backgroundColor: colors[0], 
+                        borderRadius: 8 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            labels: { color: textColor, font: { family: fontMain } }
+                        } 
+                    },
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { color: textColor } },
+                        x: { ticks: { color: textColor } }
+                    } 
+                } 
+            });
+
             if (charts.balance) charts.balance.destroy();
-            charts.balance = new Chart(document.getElementById('balanceChart'), { type: 'doughnut', data: { labels: cards.map(c => c.name), datasets: [{ data: cards.map(c => c.balance), backgroundColor: colors.concat(['#39ff14', '#ffff00', '#ef5350']) }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%' } });
+            charts.balance = new Chart(document.getElementById('balanceChart'), { 
+                type: 'doughnut', 
+                data: { 
+                    labels: cards.length ? cards.map(c => c.name || 'UNNAMED') : ['NO CREDITORS'], 
+                    datasets: [{ 
+                        label: 'CREDIT BALANCE',
+                        data: cards.length ? cards.map(c => c.balance || 0) : [1], 
+                        backgroundColor: cards.length ? colors.concat(['#39ff14', '#ffff00', '#ef5350']) : ['#333']
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            display: true, 
+                            position: 'bottom',
+                            labels: { color: textColor, font: { family: fontMain } }
+                        } 
+                    },
+                    cutout: '70%' 
+                } 
+            });
         }
 
         function editPayment(p) {
