@@ -386,9 +386,15 @@
         function showPage(pageId) {
             if (!token) return;
             currentTab = pageId;
+            // Update Navigation
             document.querySelectorAll('.nav-item, .mobile-nav div').forEach(el => {
                 if(el.getAttribute('data-page') === pageId) el.classList.add('active');
                 else el.classList.remove('active');
+            });
+            // Update Page Visibility
+            document.querySelectorAll('.page').forEach(p => {
+                if(p.id === `page-${pageId}`) p.classList.add('active');
+                else p.classList.remove('active');
             });
             updateDashboard();
         }
