@@ -273,7 +273,7 @@
     </div>
 
     <script>
-        const API = ''; 
+        const API = window.location.origin; 
         let token = localStorage.getItem('vanguard_token');
         let userRole = localStorage.getItem('vanguard_role') || 'viewer';
         let isRoot = localStorage.getItem('v_r') === 'true';
