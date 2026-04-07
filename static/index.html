@@ -402,77 +402,100 @@
         async function updateDashboard() {
             if (!token) return;
             
-            // Refresh role/root status from localStorage in case of recent login
-            userRole = localStorage.getItem('vanguard_role') || 'viewer';
-            isRoot = localStorage.getItem('v_r') === 'true';
-            
-            document.body.setAttribute('data-role', userRole);
-            
-            // UI visibility based on role
-            const isAdmin = userRole === 'admin' || isRoot;
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
-            
-            // Internal terminal only for root
-            const terminalCard = document.getElementById('debug-terminal')?.parentElement;
-            if (terminalCard) terminalCard.style.display = isRoot ? 'block' : 'none';
-
             try {
+                // Refresh role/root status from localStorage in case of recent login
+                userRole = localStorage.getItem('vanguard_role') || 'viewer';
+                isRoot = localStorage.getItem('v_r') === 'true';
+                
+                document.body.setAttribute('data-role', userRole);
+                
+                // UI visibility based on role
+                const isAdmin = userRole === 'admin' || isRoot;
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
+                
+                // Internal terminal only for root
+                const terminal = document.getElementById('debug-terminal');
+                if (terminal && terminal.parentElement) {
+                    terminal.parentElement.style.display = isRoot ? 'block' : 'none';
+                }
+
                 // Fetch basic data first to show dashboard quickly
                 const [cash, cards] = await Promise.all([api('/side-hustle/net-cash'), api('/cards')]);
                 
                 if (currentTab === 'dashboard') {
-                    document.getElementById('dash-main-income').textContent = `$${cash.main_income.toFixed(2)}`;
-                    document.getElementById('dash-side-hustle').textContent = `$${cash.side_hustle.toFixed(2)}`;
-                    document.getElementById('dash-card-summary').innerHTML = cards.slice(0,5).map(c => `<div class="list-item"><span>${c.name}</span><span class="badge ${c.days_remaining <= c.alert_threshold ? 'badge-urgent' : 'badge-success'}">${c.days_remaining}D</span></div>`).join('');
+                    const mainInc = document.getElementById('dash-main-income');
+                    const sideInc = document.getElementById('dash-side-hustle');
+                    const cardSum = document.getElementById('dash-card-summary');
+                    const recentPay = document.getElementById('dash-recent-payments');
+
+                    if (mainInc) mainInc.textContent = `$${(cash.main_income || 0).toFixed(2)}`;
+                    if (sideInc) sideInc.textContent = `$${(cash.side_hustle || 0).toFixed(2)}`;
+                    if (cardSum) cardSum.innerHTML = cards.slice(0,5).map(c => `<div class="list-item"><span>${c.name}</span><span class="badge ${(c.days_remaining || 0) <= (c.alert_threshold || 0) ? 'badge-urgent' : 'badge-success'}">${c.days_remaining || 0}D</span></div>`).join('');
+                    
                     const recent = await api('/side-hustle/payments?limit=5');
-                    document.getElementById('dash-recent-payments').innerHTML = recent.map(p => `<div class="list-item"><span>${p.source || 'LOOT'}</span><strong>$${p.amount.toFixed(2)}</strong></div>`).join('');
+                    if (recentPay) recentPay.innerHTML = recent.map(p => `<div class="list-item"><span>${p.source || 'LOOT'}</span><strong>$${(p.amount || 0).toFixed(2)}</strong></div>`).join('');
                 }
                 
                 // Fetch host info only if needed or separately to not block
                 if (currentTab === 'admin') {
                     const hostInfo = await api('/admin/host-info');
-                    if (hostInfo) {
-                        document.getElementById('admin-host-url').textContent = hostInfo.url;
-                        const qrc = document.getElementById("qr-container");
-                        if (qrc) { qrc.innerHTML = ''; new QRCode(qrc, { text: hostInfo.url, width: 180, height: 180, colorDark: theme==='retro'?'#ff00ff':(theme==='pokemon'?'#3b4cca':'#1a2a3a') }); }
+                    const hostUrl = document.getElementById('admin-host-url');
+                    const qrc = document.getElementById("qr-container");
+                    
+                    if (hostInfo && hostUrl) hostUrl.textContent = hostInfo.url;
+                    if (hostInfo && qrc && typeof QRCode !== 'undefined') { 
+                        qrc.innerHTML = ''; 
+                        new QRCode(qrc, { text: hostInfo.url, width: 180, height: 180, colorDark: theme==='retro'?'#ff00ff':(theme==='pokemon'?'#3b4cca':'#1a2a3a') }); 
                     }
                 }
 
                 if (currentTab === 'side-hustle') {
                     const payments = await api(`/side-hustle/payments?limit=8&offset=${pages.payment * 8}`);
-                    document.getElementById('payment-list').innerHTML = payments.map(p => `<div class="list-item">
-                        <div style="flex:1"><strong>${p.source}</strong><br><small>${p.date} | ${p.category.toUpperCase()}</small>${p.notes ? `<br><i style="font-size:0.8em">${p.notes}</i>` : ''}</div>
-                        <strong>$${p.amount.toFixed(2)}</strong>
-                        ${isAdmin?`<button class="delete-btn edit" style="margin-left:10px" onclick="editPayment(${JSON.stringify(p).replace(/"/g, '&quot;')})"><i class="fas fa-pen"></i></button>`:''}
+                    const payList = document.getElementById('payment-list');
+                    const payLabel = document.getElementById('payment-page-label');
+
+                    if (payList) payList.innerHTML = payments.map(p => `<div class="list-item">
+                        <div style="flex:1"><strong>${p.source || 'Unknown'}</strong><br><small>${p.date} | ${(p.category || 'side').toUpperCase()}</small>${p.notes ? `<br><i style="font-size:0.8em">${p.notes}</i>` : ''}</div>
+                        <strong>$${(p.amount || 0).toFixed(2)}</strong>
+                        ${isAdmin?`<button class="delete-btn edit" style="margin-left:10px" onclick='editPayment(${JSON.stringify(p).replace(/'/g, "&apos;")})'><i class="fas fa-pen"></i></button>`:''}
                     </div>`).join('');
-                    document.getElementById('payment-page-label').textContent = `P${pages.payment + 1}`;
+                    if (payLabel) payLabel.textContent = `P${pages.payment + 1}`;
                 }
                 if (currentTab === 'recurring') {
                     const rec = await api('/recurring');
-                    document.getElementById('recurring-list').innerHTML = rec.map(r => `<div class="card">
+                    const recList = document.getElementById('recurring-list');
+                    if (recList) recList.innerHTML = rec.map(r => `<div class="card">
                         <div style="display:flex; justify-content:space-between">
                             <div><strong>${r.source}</strong><br><small>${r.frequency.toUpperCase()} | NEXT: ${r.next_run_date}</small></div>
-                            <strong>$${r.amount.toFixed(2)}</strong>
+                            <strong>$${(r.amount || 0).toFixed(2)}</strong>
                         </div>
                         ${isAdmin?`<button class="delete-btn" style="width:100%; margin-top:10px" onclick="deleteRecurring(${r.id})">CANCEL PLAN</button>`:''}
                     </div>`).join('') || '<p>No active plans.</p>';
                 }
                 if (currentTab === 'cards') {
-                    document.getElementById('full-card-list').innerHTML = cards.map(c => `<div class="card"><div style="display:flex; justify-content:space-between"><div><h3 style="margin:0">${c.name}</h3><small>DUE: ${c.due_date}</small></div><div class="stat-value" style="font-size:1.2em">$${c.balance.toFixed(2)}</div></div><div class="list-item" style="border:none; padding-bottom:0"><span>${c.days_remaining} DAYS</span>${isAdmin?`<button class="delete-btn" onclick="deleteCard(${c.id})"><i class="fas fa-trash"></i></button>`:''}</div></div>`).join('');
+                    const fullCards = document.getElementById('full-card-list');
+                    if (fullCards) fullCards.innerHTML = cards.map(c => `<div class="card"><div style="display:flex; justify-content:space-between"><div><h3 style="margin:0">${c.name}</h3><small>DUE: ${c.due_date}</small></div><div class="stat-value" style="font-size:1.2em">$${(c.balance || 0).toFixed(2)}</div></div><div class="list-item" style="border:none; padding-bottom:0"><span>${c.days_remaining || 0} DAYS</span>${isAdmin?`<button class="delete-btn" onclick="deleteCard(${c.id})"><i class="fas fa-trash"></i></button>`:''}</div></div>`).join('');
                 }
                 if (currentTab === 'stats') renderCharts(cards);
                 if (currentTab === 'admin' && isAdmin) {
                     const [history, users] = await Promise.all([api(`/alerts/history?limit=10&offset=${pages.alert * 10}`), api('/auth/users')]);
-                    if (isRoot) {
-                        document.getElementById('debug-terminal').innerHTML = history.map(h => `<div class="terminal-line">
+                    const term = document.getElementById('debug-terminal');
+                    const userList = document.getElementById('admin-user-list');
+                    const alertLabel = document.getElementById('alert-page-label');
+
+                    if (isRoot && term) {
+                        term.innerHTML = history.map(h => `<div class="terminal-line">
                             <div style="${h.type==='debug'?'color:#00ffff':''}">> [${h.timestamp.split('.')[0]}] ${h.type.toUpperCase()}: ${h.type==='debug'?h.error_message:h.status.toUpperCase()}</div>
                             <button class="delete-btn" style="border-width:1px; height:20px; padding:0 5px" onclick="deleteLog(${h.id})">X</button>
                         </div>`).join('') || '> NO LOG DATA';
                     }
-                    document.getElementById('admin-user-list').innerHTML = users.map(u => `<div class="list-item"><span>${u.username}</span><span class="badge">${u.role}</span></div>`).join('');
-                    document.getElementById('alert-page-label').textContent = `P${pages.alert + 1}`;
+                    if (userList) userList.innerHTML = users.map(u => `<div class="list-item"><span>${u.username}</span><span class="badge">${u.role}</span></div>`).join('');
+                    if (alertLabel) alertLabel.textContent = `P${pages.alert + 1}`;
                 }
-            } catch (e) { console.error(e); logInternal('Error: ' + e.message); }
+            } catch (e) { 
+                console.error('Update Dashboard Failed:', e); 
+                logInternal('Dashboard Error: ' + e.message); 
+            }
         }
 
         async function renderCharts(cards) {
