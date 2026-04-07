@@ -220,6 +220,7 @@
                         <select id="rec-freq"><option value="daily">DAILY</option><option value="weekly">WEEKLY</option><option value="monthly">MONTHLY</option></select>
                     </div>
                     <input type="date" id="rec-next-date" required>
+                    <textarea id="rec-notes" placeholder="AUTOMATION INTEL..."></textarea>
                     <button type="submit" id="btn-save-recurring">ACTIVATE PLAN</button>
                 </form>
             </div>
@@ -291,7 +292,8 @@
                 btnCreatePlayer: 'CREATE PLAYER', adminSecurity: 'SECURITY', oldKey: 'OLD KEY', newKey: 'NEW KEY', btnUpdateKey: 'UPDATE KEY',
                 btnLogout: '<i class="fas fa-skull"></i> TERMINATE SESSION', debugTitle: 'SYSTEM TERMINAL', btnCopyDebug: 'DUMP BUFFER',
                 btnClearDebug: 'PURGE MEM', authTitle: '<i class="fas fa-gamepad"></i> WEALTHQUEST', authMsg: 'INSERT CREDENTIALS', btnLogin: 'INITIALIZE',
-                catMain: 'MAIN MISSION', catSide: 'SIDE QUEST', labelTaxable: 'Taxable', icon: 'ghost', recTitle: 'AUTOMATION PLAN', btnSaveRec: 'ACTIVATE PLAN', adminAudit: 'AUDIT TRAIL'
+                catMain: 'MAIN MISSION', catSide: 'SIDE QUEST', labelTaxable: 'Taxable', icon: 'ghost', recTitle: 'AUTOMATION PLAN', btnSaveRec: 'ACTIVATE PLAN', adminAudit: 'AUDIT TRAIL',
+                userPh: 'USER ID', passPh: 'PASS-KEY', lootSourcePh: 'ORIGIN POINT', lootNotesPh: 'MISSION INTEL...', recSourcePh: 'PLAN NAME', recNotesPh: 'AUTOMATION INTEL...', cardNamePh: 'TARGET NAME', cardBalancePh: 'DEBT HP', newUserPh: 'PLAYER NAME', newPassPh: 'SECRET CODE', oldKeyPh: 'CURRENT KEY', newKeyPh: 'NEW SECRET'
             },
             modern: {
                 brand: 'WealthQuest Financial', hustleNav: 'Hustle', recNav: 'Recurring', mainIncome: 'MAIN INCOME', sideIncome: 'SIDE INCOME', bossBills: '<i class="fas fa-bell"></i> UPCOMING BILLS',
@@ -301,7 +303,8 @@
                 btnCreatePlayer: 'CREATE USER', adminSecurity: 'ACCOUNT SECURITY', oldKey: 'OLD PASSWORD', newKey: 'NEW PASSWORD', btnUpdateKey: 'CHANGE PASSWORD',
                 btnLogout: '<i class="fas fa-power-off"></i> SIGN OUT', debugTitle: 'SYSTEM DIAGNOSTICS', btnCopyDebug: 'COPY LOGS',
                 btnClearDebug: 'CLEAR ALL', authTitle: '<i class="fas fa-shield-halved"></i> WealthQuest', authMsg: 'PLEASE SIGN IN', btnLogin: 'SIGN IN',
-                catMain: 'MAIN INCOME', catSide: 'SIDE HUSTLE', labelTaxable: 'Taxable', icon: 'shield-halved', recTitle: 'RECURRING ENTRIES', btnSaveRec: 'SAVE PATTERN', adminAudit: 'SYSTEM LOGS'
+                catMain: 'MAIN INCOME', catSide: 'SIDE HUSTLE', labelTaxable: 'Taxable', icon: 'shield-halved', recTitle: 'RECURRING ENTRIES', btnSaveRec: 'SAVE PATTERN', adminAudit: 'SYSTEM LOGS',
+                userPh: 'Username', passPh: 'Password', lootSourcePh: 'Where did this come from?', lootNotesPh: 'Additional details or context...', recSourcePh: 'Pattern name (e.g. Salary)', recNotesPh: 'Notes for this plan...', cardNamePh: 'Credit card name', cardBalancePh: 'Current statement balance', newUserPh: 'Full name or username', newPassPh: 'Set a strong password', oldKeyPh: 'Enter current password', newKeyPh: 'Enter new password'
             },
             pokemon: {
                 brand: 'POKÉQUEST', hustleNav: 'TRAIN', recNav: 'TIMER', mainIncome: 'LEAGUE PRIZE', sideIncome: 'WILD LOOT', bossBills: '<i class="fas fa-burst"></i> GYM LEADERS',
@@ -311,7 +314,8 @@
                 btnCreatePlayer: 'ADD TRAINER', adminSecurity: 'TRAINER ID', oldKey: 'OLD PASS', newKey: 'NEW PASS', btnUpdateKey: 'UPDATE ID',
                 btnLogout: '<i class="fas fa-door-open"></i> LEAVE CENTER', debugTitle: 'SYSTEM POKÉDEX', btnCopyDebug: 'EXPORT DATA',
                 btnClearDebug: 'RELEASE ALL', authTitle: '<i class="fas fa-circle-dot"></i> POKÉQUEST', authMsg: 'HELLO TRAINER!', btnLogin: 'GO!',
-                catMain: 'ELITE FOUR', catSide: 'WILD BATTLE', labelTaxable: 'Held Item', icon: 'circle-dot', recTitle: 'DAY CARE SCHEDULE', btnSaveRec: 'DEPOSIT PLAN', adminAudit: 'JOURNAL HISTORY'
+                catMain: 'ELITE FOUR', catSide: 'WILD BATTLE', labelTaxable: 'Held Item', icon: 'circle-dot', recTitle: 'DAY CARE SCHEDULE', btnSaveRec: 'DEPOSIT PLAN', adminAudit: 'JOURNAL HISTORY',
+                userPh: 'TRAINER NAME', passPh: 'BADGE CODE', lootSourcePh: 'WHERE CAUGHT?', lootNotesPh: 'BATTLE NOTES...', recSourcePh: 'EXP PATTERN', recNotesPh: 'DAY CARE NOTES...', cardNamePh: 'RIVAL NAME', cardBalancePh: 'COIN DEBT', newUserPh: 'NEW TRAINER', newPassPh: 'SECURITY CODE', oldKeyPh: 'OLD BADGE CODE', newKeyPh: 'NEW BADGE CODE'
             }
         };
 
@@ -327,11 +331,25 @@
             document.getElementById('label-recent-loot').innerHTML = d.recentLoot;
             document.getElementById('hustle-form-title').textContent = d.hustleForm;
             document.getElementById('label-mission-log').textContent = d.hustleJournal;
+            
+            // Apply dynamic placeholders
+            document.getElementById('username').placeholder = d.userPh;
+            document.getElementById('password').placeholder = d.passPh;
             document.getElementById('pay-amount').placeholder = d.hustleAmount;
+            document.getElementById('pay-source').placeholder = d.lootSourcePh;
+            document.getElementById('pay-notes').placeholder = d.lootNotesPh;
+            document.getElementById('rec-amount').placeholder = d.hustleAmount;
+            document.getElementById('rec-source').placeholder = d.recSourcePh;
+            document.getElementById('rec-notes').placeholder = d.recNotesPh;
+            document.getElementById('card-name').placeholder = d.cardNamePh;
+            document.getElementById('card-balance').placeholder = d.cardBalancePh;
+            document.getElementById('new-user-name').placeholder = d.newUserPh;
+            document.getElementById('new-user-pass').placeholder = d.newPassPh;
+            document.getElementById('old-password').placeholder = d.oldKeyPh;
+            document.getElementById('new-password').placeholder = d.newKeyPh;
+
             document.getElementById('btn-save-loot').textContent = d.btnSaveLoot;
             document.getElementById('label-add-creditor').textContent = d.addCreditor;
-            document.getElementById('card-name').placeholder = d.cardName;
-            document.getElementById('card-balance').placeholder = d.cardBalance;
             document.getElementById('btn-commit-card').textContent = d.btnCommitCard;
             document.getElementById('label-stats-trends').textContent = d.statsTrends;
             document.getElementById('label-stats-split').textContent = d.statsSplit;
@@ -339,8 +357,6 @@
             document.getElementById('label-user-mgmt').textContent = d.adminUser;
             document.getElementById('btn-create-player').textContent = d.btnCreatePlayer;
             document.getElementById('label-security').textContent = d.adminSecurity;
-            document.getElementById('old-password').placeholder = d.oldKey;
-            document.getElementById('new-password').placeholder = d.newKey;
             document.getElementById('btn-update-key').textContent = d.btnUpdateKey;
             document.getElementById('btn-logout').innerHTML = d.btnLogout;
             document.getElementById('label-audit-trail').textContent = d.adminAudit;
@@ -549,7 +565,7 @@
 
         document.getElementById('recurring-form').onsubmit = async (e) => {
             e.preventDefault();
-            const body = JSON.stringify({ amount: parseFloat(document.getElementById('rec-amount').value), source: document.getElementById('rec-source').value, category: document.getElementById('rec-category').value, frequency: document.getElementById('rec-freq').value, next_run_date: document.getElementById('rec-next-date').value });
+            const body = JSON.stringify({ amount: parseFloat(document.getElementById('rec-amount').value), source: document.getElementById('rec-source').value, category: document.getElementById('rec-category').value, frequency: document.getElementById('rec-freq').value, next_run_date: document.getElementById('rec-next-date').value, notes: document.getElementById('rec-notes').value });
             await api('/recurring', { method: 'POST', body });
             e.target.reset(); setDefaultDates(); updateDashboard();
         };
