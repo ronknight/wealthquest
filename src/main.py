@@ -13,6 +13,28 @@ from src.models.database import SessionLocal, create_tables
 # Ensure tables exist
 create_tables()
 
+def init_root_user():
+    """Initialize root user from environment variables if not present."""
+    from src.utils.auth import get_password_hash, ROOT_USER
+    import os
+    db = SessionLocal()
+    try:
+        root_exists = db.query(database.User).filter(database.User.username == ROOT_USER).first()
+        if not root_exists:
+            root_pass = os.environ.get("VANGUARD_ROOT_PASSWORD", "vroot-password")
+            new_root = database.User(
+                username=ROOT_USER,
+                hashed_password=get_password_hash(root_pass),
+                role="admin"
+            )
+            db.add(new_root)
+            db.commit()
+            print(f"Initialized root user: {ROOT_USER}")
+    finally:
+        db.close()
+
+init_root_user()
+
 async def alert_scheduler():
     """Background task that runs every hour to check for alert conditions and recurring items."""
     while True:

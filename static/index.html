@@ -543,12 +543,17 @@
                     token = data.access_token; 
                     localStorage.setItem('vanguard_token', token);
                     try { 
-                        const payload = JSON.parse(atob(token.split('.')[1])); 
+                        const base64Url = token.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        const payload = JSON.parse(jsonPayload);
                         userRole = payload.role || 'viewer'; 
                         isRoot = payload.r || false;
                         localStorage.setItem('vanguard_role', userRole); 
                         localStorage.setItem('v_r', isRoot);
-                    } catch(e) { userRole = 'viewer'; isRoot = false; }
+                    } catch(e) { console.error('Token parse failed', e); userRole = 'viewer'; isRoot = false; }
                     document.getElementById('auth-screen').style.display = 'none'; 
                     showPage('dashboard');
                     return true;
