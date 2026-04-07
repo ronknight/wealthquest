@@ -17,7 +17,7 @@ def test_test_notification_fail_no_api(mock_which, client):
     assert response.status_code == 500
     assert "termux-api not installed" in response.json()["detail"]
 
-def test_alert_history(client, db):
+def test_alert_history(client, db, auth_headers):
     # Insert an alert directly into DB for history check
     alert = database.Alert(
         timestamp="2026-04-04T12:00:00",
@@ -28,7 +28,7 @@ def test_alert_history(client, db):
     db.add(alert)
     db.commit()
     
-    response = client.get("/api/v1/alerts/history")
+    response = client.get("/api/v1/alerts/history", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
