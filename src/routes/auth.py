@@ -30,10 +30,15 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/register", response_model=schemas.User)
-def register_user(user_in: schemas.UserCreate, db: Session = Depends(database.get_db)):
-    # Simple check if any users exist - if not, first user is admin
-    user_count = db.query(database.User).count()
-    role = "admin" if user_count == 0 else user_in.role
+def register_user(
+    user_in: schemas.UserCreate, 
+    db: Session = Depends(database.get_db),
+    current_user: database.User = Depends(auth.get_current_user)
+):
+    """Admin/vroot only: register a new user."""
+    # Ensure only admin/vroot can create users
+    if not auth.is_root(current_user) and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to create users")
     
     existing_user = db.query(database.User).filter(database.User.username == user_in.username).first()
     if existing_user:
@@ -42,7 +47,7 @@ def register_user(user_in: schemas.UserCreate, db: Session = Depends(database.ge
     db_user = database.User(
         username=user_in.username,
         hashed_password=auth.get_password_hash(user_in.password),
-        role=role
+        role=user_in.role or "user"
     )
     db.add(db_user)
     db.commit()
@@ -53,6 +58,29 @@ def register_user(user_in: schemas.UserCreate, db: Session = Depends(database.ge
 def list_users(current_user: database.User = Depends(auth.require_admin), db: Session = Depends(database.get_db)):
     """Admin only: list all users."""
     return db.query(database.User).all()
+
+@router.delete("/users/{username}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(
+    username: str, 
+    current_user: database.User = Depends(auth.require_admin), 
+    db: Session = Depends(database.get_db)
+):
+    """Admin/vroot only: delete a user."""
+    # Cannot delete the vroot user via this endpoint
+    if username == auth.ROOT_USER:
+        raise HTTPException(status_code=403, detail="Cannot delete super admin")
+    
+    # User cannot delete themselves
+    if username == current_user.username:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    user_to_delete = db.query(database.User).filter(database.User.username == username).first()
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db.delete(user_to_delete)
+    db.commit()
+    return None
 
 @router.post("/change-password")
 def change_password(

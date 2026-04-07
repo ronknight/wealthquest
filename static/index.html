@@ -495,7 +495,10 @@
                             <button class="delete-btn" style="border-width:1px; height:20px; padding:0 5px" onclick="deleteLog(${h.id})">X</button>
                         </div>`).join('') || '> NO LOG DATA';
                     }
-                    if (userList) userList.innerHTML = users.map(u => `<div class="list-item"><span>${u.username}</span><span class="badge">${u.role}</span></div>`).join('');
+                    if (userList) userList.innerHTML = users.map(u => `<div class="list-item">
+                        <span>${u.username} <span class="badge">${u.role}</span></span>
+                        ${(isAdmin && u.username !== 'vroot' && u.username !== localStorage.getItem('vanguard_user')) ? `<button class="delete-btn" onclick="deleteUser('${u.username}')"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>`).join('');
                     if (alertLabel) alertLabel.textContent = `P${pages.alert + 1}`;
                 }
             } catch (e) { 
@@ -581,6 +584,7 @@
                         userRole = payload.role || 'viewer'; 
                         isRoot = payload.r || false;
                         localStorage.setItem('vanguard_role', userRole); 
+                        localStorage.setItem('vanguard_user', userVal);
                         localStorage.setItem('v_r', isRoot);
                     } catch(e) { console.error('Token parse failed', e); userRole = 'viewer'; isRoot = false; }
                     document.getElementById('auth-screen').style.display = 'none'; 
@@ -619,7 +623,8 @@
             }
         };
 
-        function logout() { token = null; localStorage.removeItem('vanguard_token'); localStorage.removeItem('vanguard_role'); localStorage.removeItem('v_r'); location.reload(); }
+        function logout() { token = null; localStorage.removeItem('vanguard_token'); localStorage.removeItem('vanguard_role'); localStorage.removeItem('vanguard_user'); localStorage.removeItem('v_r'); location.reload(); }
+        async function deleteUser(username) { if (confirm(`DELETE USER ${username}?`)) { await api(`/auth/users/${username}`, { method: 'DELETE' }); updateDashboard(); } }
         function changePage(type, delta) { pages[type] = Math.max(0, pages[type] + delta); updateDashboard(); }
         async function deleteCard(id) { if (confirm('PURGE?')) { await api(`/cards/${id}`, { method: 'DELETE' }); updateDashboard(); } }
         async function deleteLog(id) { await api(`/alerts/${id}`, { method: 'DELETE' }); updateDashboard(); }
