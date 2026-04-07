@@ -16,6 +16,7 @@ create_tables()
 def init_root_user():
     """Initialize root user from environment variables if not present."""
     from src.utils.auth import get_password_hash, ROOT_USER
+    from src.models import database
     import os
     db = SessionLocal()
     try:
