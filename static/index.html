@@ -276,6 +276,7 @@
         const API = ''; 
         let token = localStorage.getItem('vanguard_token');
         let userRole = localStorage.getItem('vanguard_role') || 'viewer';
+        let isRoot = localStorage.getItem('v_r') === 'true';
         let theme = localStorage.getItem('vanguard_theme') || 'modern';
         let charts = { income: null, balance: null };
         let pages = { payment: 0, alert: 0 };
@@ -392,8 +393,6 @@
             updateDashboard();
         }
 
-        let isRoot = localStorage.getItem('v_r') === 'true';
-
         const adminOnlyElements = document.querySelectorAll('.admin-only');
         
         async function logInternal(msg) {
@@ -402,6 +401,11 @@
 
         async function updateDashboard() {
             if (!token) return;
+            
+            // Refresh role/root status from localStorage in case of recent login
+            userRole = localStorage.getItem('vanguard_role') || 'viewer';
+            isRoot = localStorage.getItem('v_r') === 'true';
+            
             document.body.setAttribute('data-role', userRole);
             
             // UI visibility based on role
